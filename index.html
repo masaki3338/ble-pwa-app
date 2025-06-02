@@ -45,17 +45,12 @@
       }
     });
 
-    document.getElementById("Ready").addEventListener("click", () => {
-      const msg = new SpeechSynthesisUtterance("位置について");
-      msg.lang = "ja-JP";
-      speechSynthesis.speak(msg);
+
+    document.getElementById("Ready").addEventListener("click", async () => {
+      // 音声再生
+      document.getElementById("audioReady").play();
       alert("位置について！");
     });
-   // document.getElementById("Ready").addEventListener("click", async () => {
-   //   // 音声再生
-   //   document.getElementById("audioReady").play();
-   //   alert("位置について！");
-   // });
     document.getElementById("Set").addEventListener("click", async () => {
       // 音声再生
       document.getElementById("audioSet").play();
