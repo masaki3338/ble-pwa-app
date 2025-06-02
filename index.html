@@ -26,56 +26,54 @@
     <source src="Go.mp3" type="audio/mpeg" />
   </audio>
 
-  <script>
-    let bleDevice;
-    let bleCharacteristic;
+<script>
+  let bleDevice;
+  let bleCharacteristic;
 
-    document.getElementById("connect").addEventListener("click", async () => {
-      try {
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
-          optionalServices: ["abcd1234-abcd-1234-abcd-1234567890ab"]
-        });
-        const server = await bleDevice.gatt.connect();
-        const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
-        bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
-        alert("接続成功！");
-      } catch (err) {
-        alert("接続失敗：" + err);
-      }
-    });
+  document.getElementById("connect").addEventListener("click", async () => {
+    try {
+      bleDevice = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
+        optionalServices: ["abcd1234-abcd-1234-abcd-1234567890ab"]
+      });
+      const server = await bleDevice.gatt.connect();
+      const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
+      bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
+      alert("接続成功！");
+    } catch (err) {
+      alert("接続失敗：" + err);
+    }
+  });
 
+  document.getElementById("Ready").addEventListener("click", async () => {
+    document.getElementById("audioReady").play();
+    alert("位置について！");
+  });
 
-    document.getElementById("Ready").addEventListener("click", async () => {
-      // 音声再生
-      document.getElementById("audioReady").play();
-      alert("位置について！");
-    });
-    document.getElementById("Set").addEventListener("click", async () => {
-      // 音声再生
-      document.getElementById("audioSet").play();
-      alert("よーい！");
-    });
-    document.getElementById("sendStart").addEventListener("click", async () => {
-      // 音声再生
-      document.getElementById("audioGo").play();
+  document.getElementById("Set").addEventListener("click", async () => {
+    document.getElementById("audioSet").play();
+    alert("よーい！");
+  });
 
-    // 0.5秒（500ミリ秒）待ってからスタート信号送信
+  document.getElementById("sendStart").addEventListener("click", async () => {
+    document.getElementById("audioGo").play();
+
     setTimeout(async () => {
       if (bleCharacteristic) {
         const encoder = new TextEncoder();
         await bleCharacteristic.writeValue(encoder.encode("start"));
         alert("スタート送信！");
       }
-    },500); // 0.5秒待つ
+    }, 500);
+  });
 
-    document.getElementById("sendStop").addEventListener("click", async () => {
-      if (bleCharacteristic) {
-        const encoder = new TextEncoder();
-        await bleCharacteristic.writeValue(encoder.encode("stop"));
-        alert("ストップ送信！");
-      }
-    });
+  document.getElementById("sendStop").addEventListener("click", async () => {
+    if (bleCharacteristic) {
+      const encoder = new TextEncoder();
+      await bleCharacteristic.writeValue(encoder.encode("stop"));
+      alert("ストップ送信！");
+    }
+  });
 
   document.getElementById("sendReset").addEventListener("click", async () => {
     if (bleCharacteristic) {
@@ -84,6 +82,6 @@
       alert("リセット送信！");
     }
   });
-  </script>
+</script>
 </body>
 </html>
