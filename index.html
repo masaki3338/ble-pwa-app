@@ -46,10 +46,11 @@
     });
 
     document.getElementById("Ready").addEventListener("click", () => {
-    const msg = new SpeechSynthesisUtterance("位置について");
-    msg.lang = "ja-JP";
-    speechSynthesis.speak(msg);
-
+      const msg = new SpeechSynthesisUtterance("位置について");
+      msg.lang = "ja-JP";
+      speechSynthesis.speak(msg);
+      alert("位置について！");
+    });
    // document.getElementById("Ready").addEventListener("click", async () => {
    //   // 音声再生
    //   document.getElementById("audioReady").play();
