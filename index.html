@@ -14,7 +14,7 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-    }
+
 
     /* アプリの枠（カード） */
     .app-container {
@@ -68,10 +68,28 @@
       flex-direction: column;
       gap: 10px;
     }
+
+    #countdown {
+    position: fixed;       /* 画面に固定 */
+    top: 10px;             /* 画面上部10px */
+    left: 50%;             /* 横中央 */
+    transform: translateX(-50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: red;
+    z-index: 9999;         /* 最前面 */
+    background: rgba(255,255,255,0.8); /* 少し背景を半透明にして見やすく */
+    padding: 5px 15px;
+    border-radius: 8px;
+    pointer-events: none;  /* ボタンなどの操作を邪魔しない */
+}
+
   </style>
 </head>
 <body>
-  <div class="app-container">
+    <!-- 常に表示するカウントダウン表示 -->
+    <div id="countdown"></div>
+    <div class="app-container">
 
     <!-- メニュー画面 -->
     <div id="menuScreen" class="screen active">
