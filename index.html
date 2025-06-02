@@ -18,12 +18,12 @@
     document.getElementById("connect").addEventListener("click", async () => {
       try {
         bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: ["6e400001-b5a3-f393-e0a9-e50e24dcca9e"] }],
-          optionalServices: ["6e400001-b5a3-f393-e0a9-e50e24dcca9e"]
+          filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
+          optionalServices: ["abcd1234-abcd-1234-abcd-1234567890ab"]
         });
         const server = await bleDevice.gatt.connect();
-        const service = await server.getPrimaryService("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
-        bleCharacteristic = await service.getCharacteristic("6e400002-b5a3-f393-e0a9-e50e24dcca9e");
+        const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
+        bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
         alert("接続成功！");
       } catch (err) {
         alert("接続失敗：" + err);
