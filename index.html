@@ -67,7 +67,7 @@
         await bleCharacteristic.writeValue(encoder.encode("start"));
         alert("スタート送信！");
       }
-    },500); // 0.5秒待つ
+    },2500); // 0.5秒待つ
 
     document.getElementById("sendStop").addEventListener("click", async () => {
       if (bleCharacteristic) {
