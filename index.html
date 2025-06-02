@@ -3,55 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BLE PWA App</title>
+  <title>BLE UI</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f5f5f5;
       margin: 0;
-      padding: 0;
+      font-family: sans-serif;
+      background: #f0f0f0;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
+      min-height: 100vh;
     }
 
-    h1 {
-      text-align: center;
-      background-color: #2196f3;
-      color: white;
+    .app-container {
       width: 100%;
-      padding: 16px 0;
-      margin: 0;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      max-width: 400px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 20px;
     }
 
-    .container {
-      margin-top: 20px;
-      padding: 20px;
-      background-color: white;
-      width: 90%;
-      max-width: 400px;
-      border-radius: 16px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      display: flex;
+    .screen {
+      display: none;
       flex-direction: column;
-      gap: 12px;
+      gap: 15px;
+    }
+
+    .screen.active {
+      display: flex;
     }
 
     button {
-      padding: 14px;
-      font-size: 16px;
+      padding: 15px;
+      font-size: 18px;
       border: none;
       border-radius: 8px;
-      background-color: #2196f3;
+      background-color: #007bff;
       color: white;
-      font-weight: bold;
       cursor: pointer;
-      transition: background-color 0.2s;
     }
 
     button:hover {
-      background-color: #1976d2;
+      background-color: #0056b3;
     }
 
     #countdown {
@@ -59,87 +53,121 @@
       font-weight: bold;
       color: red;
       text-align: center;
-      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <!-- アプリのタイトル -->
-  <h1>BLE送信アプリ</h1>
+  <div class="app-container">
 
-  <!-- 各種操作ボタン -->
-  <button id="connect">BLE接続</button>
-  <button id="Ready">位置について</button>
-  <button id="Set">よーい</button>
-  <button id="sendStart">スタートを送信</button>
-  <button id="sequence">位置について・よーい・スタート</button>
-  <button id="sendStop">ストップを送信</button>
-  <button id="sendReset">リセットを送信</button>
+    <!-- メニュー画面 -->
+    <div id="menuScreen" class="screen active">
+      <h2>メニュー</h2>
+      <button id="connectBtn">BLE接続</button>
+      <button onclick="showScreen('manualScreen')">手動モード</button>
+      <button onclick="showScreen('autoScreen')">自動モード</button>
+    </div>
 
-  <!-- カウントダウン表示領域 -->
-  <div id="countdown"></div>
+    <!-- 手動モード画面 -->
+    <div id="manualScreen" class="screen">
+      <h2>手動モード</h2>
+      <button id="btnReady">位置について</button>
+      <button id="btnSet">よーい</button>
+      <button id="btnStart">スタート</button>
+      <button onclick="showScreen('menuScreen')">戻る</button>
+    </div>
 
-  <!-- 音声ファイル読み込み -->
-  <audio id="audioReady" preload="auto">
-    <source src="Ready.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audioSet" preload="auto">
-    <source src="Set.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audioGo" preload="auto">
-    <source src="Go.mp3" type="audio/mpeg" />
-  </audio>
+    <!-- 自動モード画面 -->
+    <div id="autoScreen" class="screen">
+      <h2>自動モード</h2>
+      <div id="countdown"></div>
+      <button id="sequenceBtn">シーケンス開始</button>
+      <button onclick="showScreen('menuScreen')">戻る</button>
+    </div>
+
+  </div>
+
+  <!-- 音声ファイル -->
+  <audio id="audioReady" src="Ready.mp3"></audio>
+  <audio id="audioSet" src="Set.mp3"></audio>
+  <audio id="audioGo" src="Go.mp3"></audio>
+
 
 <script>
   // BLEデバイスおよびキャラクタリスティックの参照用変数
   let bleDevice;
   let bleCharacteristic;
 
-  // BLE接続処理
-  document.getElementById("connect").addEventListener("click", async () => {
-    try {
-      // デバイスをスキャンして取得
-      bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
-        optionalServices: ["abcd1234-abcd-1234-abcd-1234567890ab"]
-      });
-
-      // GATT接続を開始
-      const server = await bleDevice.gatt.connect();
-
-      // サービスとキャラクタリスティックを取得
-      const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
-      bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
-
-      alert("接続成功！");
-    } catch (err) {
-      alert("接続失敗：" + err);
+    // 画面切り替え
+    function showScreen(screenId) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(screenId).classList.add("active");
     }
-  });
 
-  // 「位置について」ボタンの処理
-  document.getElementById("Ready").addEventListener("click", () => {
-    document.getElementById("audioReady").play(); // 音声再生
-  });
+    // BLE接続（実装例・省略可）
+    document.getElementById("connectBtn").addEventListener("click", () => {
+      try {
+        // デバイスをスキャンして取得
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
+          optionalServices: ["abcd1234-abcd-1234-abcd-1234567890ab"]
+        });
 
-  // 「よーい」ボタンの処理
-  document.getElementById("Set").addEventListener("click", () => {
-    document.getElementById("audioSet").play(); // 音声再生
-  });
+        // GATT接続を開始
+        const server = await bleDevice.gatt.connect();
 
-  // 「スタート送信」ボタンの処理
-  document.getElementById("sendStart").addEventListener("click", async () => {
-    document.getElementById("audioGo").play(); // 音声再生
+        // サービスとキャラクタリスティックを取得
+        const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
+        bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
 
-    // 0.5秒後にBLE送信
-    setTimeout(async () => {
-      if (bleCharacteristic) {
-        const encoder = new TextEncoder();
-        await bleCharacteristic.writeValue(encoder.encode("start"));
-        alert("スタート送信！");
+        alert("接続成功！");
+      } catch (err) {
+        alert("接続失敗：" + err);
       }
-    }, 500);
-  });
+    });
+
+      // 手動モードボタン
+    // 「位置について」ボタンの処理
+    document.getElementById("btnReady").addEventListener("click", () => {
+      document.getElementById("audioReady").play();// 音声再生
+    });
+    // 「よーい」ボタンの処理
+    document.getElementById("btnSet").addEventListener("click", () => {
+      document.getElementById("audioSet").play();// 音声再生
+    });
+    // 「スタート送信」ボタンの処理
+    document.getElementById("btnStart").addEventListener("click", () => {
+      document.getElementById("audioGo").play();// 音声再生
+     // 0.5秒後にBLE送信
+      setTimeout(async () => {
+        if (bleCharacteristic) {
+          const encoder = new TextEncoder();
+          await bleCharacteristic.writeValue(encoder.encode("start"));
+          alert("スタート送信！");
+        }
+      }, 500);
+    });
+
+    // 自動モード処理
+    document.getElementById("sequenceBtn").addEventListener("click", async () => {
+      try {
+        await showCountdown(3); // カウントダウン実行（非同期）
+        document.getElementById("audioReady").play();
+        await new Promise(res => setTimeout(res, 3000));
+        document.getElementById("audioSet").play();
+        await new Promise(res => setTimeout(res, 3000));
+        document.getElementById("audioGo").play();
+        // BLEで "start" を送信
+        if (bleCharacteristic) {
+            const encoder = new TextEncoder();
+            await bleCharacteristic.writeValue(encoder.encode("start"));
+        } else {
+            alert("BLEに接続していません。");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
 
   // カウントダウン表示関数（Promiseで完了を待てる）
   function showCountdown(seconds) {
