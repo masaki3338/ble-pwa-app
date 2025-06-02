@@ -9,7 +9,9 @@
 <body>
   <h1>BLE送信アプリ</h1>
   <button id="connect">BLE接続</button>
-  <button id="send">ドンを送信</button>
+  <button id="sendStart">スタートを送信</button>
+  <button id="sendStop">ストップを送信</button>
+  <button id="sendReset">リセットを送信</button>
 
   <script>
     let bleDevice;
@@ -30,13 +32,29 @@
       }
     });
 
-    document.getElementById("send").addEventListener("click", async () => {
+    document.getElementById("sendStart").addEventListener("click", async () => {
       if (bleCharacteristic) {
         const encoder = new TextEncoder();
         await bleCharacteristic.writeValue(encoder.encode("start"));
-        alert("送信しました！");
+        alert("スタート送信！");
       }
     });
+
+    document.getElementById("sendStop").addEventListener("click", async () => {
+      if (bleCharacteristic) {
+        const encoder = new TextEncoder();
+        await bleCharacteristic.writeValue(encoder.encode("stop"));
+        alert("ストップ送信！");
+      }
+    });
+
+  document.getElementById("sendReset").addEventListener("click", async () => {
+    if (bleCharacteristic) {
+      const encoder = new TextEncoder();
+      await bleCharacteristic.writeValue(encoder.encode("reset"));
+      alert("リセット送信！");
+    }
+  });
   </script>
 </body>
 </html>
