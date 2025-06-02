@@ -4,7 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BLE PWA App</title>
-  <link rel="manifest" href="manifest.json" />
+  //<link rel="manifest" href="manifest.json" />
+  <style>
+    #countdown {
+      font-size: 48px;
+      font-weight: bold;
+      color: red;
+      margin: 20px;
+    }
+  </style>
 </head>
 <body>
   <h1>BLE送信アプリ</h1>
@@ -13,19 +21,16 @@
   <button id="Set">よーい</button>
   <button id="sendStart">スタートを送信</button>
   <button id="sequence">位置について・よーい・スタート</button>
-    <button id="sendStop">ストップを送信</button>
+  <button id="sendStop">ストップを送信</button>
   <button id="sendReset">リセットを送信</button>
 
+  <div id="countdown"></div>
+
+
   <!-- 音声ファイルを読み込む -->
-  <audio id="audioReady" preload="auto">
-    <source src="Ready.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audioSet" preload="auto">
-    <source src="Set.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audioGo" preload="auto">
-    <source src="Go.mp3" type="audio/mpeg" />
-  </audio>
+  <audio id="audioReady" preload="auto"><source src="Ready.mp3" type="audio/mpeg" /></audio>
+  <audio id="audioSet" preload="auto"><source src="Set.mp3" type="audio/mpeg" /></audio>
+  <audio id="audioGo" preload="auto"><source src="Go.mp3" type="audio/mpeg" /></audio>
 
 <script>
   let bleDevice;
@@ -68,15 +73,35 @@
   });
 
 
+  function showCountdown(seconds) {
+    return new Promise((resolve) => {
+      const countdownElem = document.getElementById("countdown");
+      let remaining = seconds;
+
+      const interval = setInterval(() => {
+        countdownElem.textContent = remaining;
+        remaining--;
+        if (remaining < 0) {
+          clearInterval(interval);
+          countdownElem.textContent = "";
+          resolve();
+        }
+      }, 1000);
+    });
+  }
+
   document.getElementById("sequence").addEventListener("click", async () => {
   try {
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // カウントダウン3秒
+    await showCountdown(3);
+
+    await new Promise(resolve => setTimeout(resolve, 3000));
     // 1. 「位置について」再生
     document.getElementById("audioReady").play();
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
     // 2. 「よーい」再生
     document.getElementById("audioSet").play();
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
     // 3. 「スタート」再生
     document.getElementById("audioGo").play();
 
