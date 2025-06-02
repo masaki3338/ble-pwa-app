@@ -47,8 +47,16 @@
 
 
     document.getElementById("Ready").addEventListener("click", async () => {
-      // 音声再生
-      document.getElementById("audioReady").play();
+      const audio = document.getElementById("audioReady");
+      audio.currentTime = 0; // 再生位置を先頭に戻す
+      const playPromise = audio.play();
+
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.error("再生エラー:", error);
+          alert("再生に失敗しました。ユーザー操作後でないと再生できないことがあります。");
+        });
+      }
       alert("位置について！");
     });
     document.getElementById("Set").addEventListener("click", async () => {
