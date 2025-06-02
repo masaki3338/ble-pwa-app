@@ -87,7 +87,6 @@
     if (bleCharacteristic) {
       const encoder = new TextEncoder();
       await bleCharacteristic.writeValue(encoder.encode("start"));
-      alert("スタート送信！");
     } else {
       alert("BLEに接続していません。");
     }
