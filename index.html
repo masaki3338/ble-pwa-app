@@ -47,16 +47,8 @@
 
 
     document.getElementById("Ready").addEventListener("click", async () => {
-      const audio = document.getElementById("audioReady");
-      audio.currentTime = 0; // 再生位置を先頭に戻す
-      const playPromise = audio.play();
-
-      if (playPromise !== undefined) {
-        playPromise.catch((error) => {
-          console.error("再生エラー:", error);
-          alert("再生に失敗しました。ユーザー操作後でないと再生できないことがあります。");
-        });
-      }
+      // 音声再生
+      document.getElementById("audioReady").play();
       alert("位置について！");
     });
     document.getElementById("Set").addEventListener("click", async () => {
@@ -65,15 +57,17 @@
       alert("よーい！");
     });
     document.getElementById("sendStart").addEventListener("click", async () => {
-        // 音声再生
+      // 音声再生
       document.getElementById("audioGo").play();
 
+    // 0.5秒（500ミリ秒）待ってからスタート信号送信
+    setTimeout(async () => {
       if (bleCharacteristic) {
         const encoder = new TextEncoder();
         await bleCharacteristic.writeValue(encoder.encode("start"));
         alert("スタート送信！");
       }
-    });
+    },500); // 0.5秒待つ
 
     document.getElementById("sendStop").addEventListener("click", async () => {
       if (bleCharacteristic) {
