@@ -12,7 +12,8 @@
   <button id="Ready">位置について</button>
   <button id="Set">よーい</button>
   <button id="sendStart">スタートを送信</button>
-  <button id="sendStop">ストップを送信</button>
+  <button id="sequence">位置について・よーい・スタート</button>
+    <button id="sendStop">ストップを送信</button>
   <button id="sendReset">リセットを送信</button>
 
   <!-- 音声ファイルを読み込む -->
@@ -65,6 +66,32 @@
       }
     }, 500);
   });
+
+
+  document.getElementById("sequence").addEventListener("click", async () => {
+  try {
+    // 1. 「位置について」再生
+    await playAudio(document.getElementById("audioReady"));
+    // 2. 「よーい」再生
+    await playAudio(document.getElementById("audioSet"));
+    // 3. 「スタート」再生
+    await playAudio(document.getElementById("audioGo"));
+
+    // 0.5秒待つ
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // BLEでstart送信
+    if (bleCharacteristic) {
+      const encoder = new TextEncoder();
+      await bleCharacteristic.writeValue(encoder.encode("start"));
+      alert("スタート送信！");
+    } else {
+      alert("BLEに接続していません。");
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});
 
   document.getElementById("sendStop").addEventListener("click", async () => {
     if (bleCharacteristic) {
