@@ -9,9 +9,22 @@
 <body>
   <h1>BLE送信アプリ</h1>
   <button id="connect">BLE接続</button>
+  <button id="Ready">位置について</button>
+  <button id="Set">よーい</button>
   <button id="sendStart">スタートを送信</button>
   <button id="sendStop">ストップを送信</button>
   <button id="sendReset">リセットを送信</button>
+
+  <!-- 音声ファイルを読み込む -->
+  <audio id="audioReady" preload="auto">
+    <source src="Ready.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="audioSet" preload="auto">
+    <source src="Set.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="audioGo" preload="auto">
+    <source src="Go.mp3" type="audio/mpeg" />
+  </audio>
 
   <script>
     let bleDevice;
@@ -31,8 +44,18 @@
         alert("接続失敗：" + err);
       }
     });
-
+    document.getElementById("Ready").addEventListener("click", async () => {
+      // 音声再生
+      document.getElementById("audioReady").play();
+    });
+    document.getElementById("Set").addEventListener("click", async () => {
+      // 音声再生
+      document.getElementById("audioSet").play();
+    });
     document.getElementById("sendStart").addEventListener("click", async () => {
+        // 音声再生
+      document.getElementById("audioGo").play();
+
       if (bleCharacteristic) {
         const encoder = new TextEncoder();
         await bleCharacteristic.writeValue(encoder.encode("start"));
