@@ -60,6 +60,14 @@
       color: red;
       text-align: center;
     }
+
+    /* 追加：余分なコントロールの間隔調整 */
+    .extra-controls {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
   </style>
 </head>
 <body>
@@ -79,6 +87,11 @@
       <button id="btnReady">位置について</button>
       <button id="btnSet">よーい</button>
       <button id="btnStart">スタート</button>
+      <!-- ↓ 追加部分（少し間を空けてストップ・リセット） -->
+      <div class="extra-controls">
+        <button id="btnStopManual">ストップ</button>
+        <button id="btnResetManual">リセット</button>
+      </div>
       <button onclick="showScreen('menuScreen')">戻る</button>
     </div>
 
@@ -87,6 +100,10 @@
       <h2>自動モード</h2>
       <div id="countdown"></div>
       <button id="sequenceBtn">シーケンス開始</button>
+      <div class="extra-controls">
+        <button id="btnStopAuto">ストップ</button>
+        <button id="btnResetAuto">リセット</button>
+      </div>
       <button onclick="showScreen('menuScreen')">戻る</button>
     </div>
 
@@ -220,6 +237,37 @@
       }, 1000); // 1秒ごとにカウント
     });
   }
+    /**
+   * ストップ信号送信
+   */
+  async function sendStop() {
+    if (bleCharacteristic) {
+      const encoder = new TextEncoder();
+      await bleCharacteristic.writeValue(encoder.encode("stop"));
+      alert("ストップ送信！");
+    } else {
+      alert("BLEに接続されていません。");
+    }
+  }
+  /**
+   * リセット信号送信
+   */
+  async function sendReset() {
+    if (bleCharacteristic) {
+      const encoder = new TextEncoder();
+      await bleCharacteristic.writeValue(encoder.encode("reset"));
+      alert("リセット送信！");
+    } else {
+      alert("BLEに接続されていません。");
+    }
+  }
+  // 手動モードのストップ／リセット
+  document.getElementById("btnStopManual").addEventListener("click", sendStop);
+  document.getElementById("btnResetManual").addEventListener("click", sendReset);
+
+  // 自動モードのストップ／リセット
+  document.getElementById("btnStopAuto").addEventListener("click", sendStop);
+  document.getElementById("btnResetAuto").addEventListener("click", sendReset);
 </script>
 </body>
 </html>
