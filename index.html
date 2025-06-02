@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BLE UI</title>
   <style>
-    /* ページ全体の基本スタイル設定 */
     body {
       margin: 0;
       font-family: sans-serif;
@@ -15,8 +14,6 @@
       align-items: center;
       min-height: 100vh;
     }
-
-    /* アプリの枠（カード） */
     .app-container {
       width: 100%;
       max-width: 400px;
@@ -25,20 +22,14 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       padding: 20px;
     }
-
-    /* 各画面（メニュー、手動、自動）は基本非表示 */
     .screen {
       display: none;
       flex-direction: column;
       gap: 15px;
     }
-
-    /* 表示中の画面に active クラスを付けて表示 */
     .screen.active {
       display: flex;
     }
-
-    /* ボタンの共通スタイル */
     button {
       padding: 15px;
       font-size: 18px;
@@ -48,28 +39,35 @@
       color: white;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #0056b3;
     }
-
-    /* カウントダウン表示 */
     #countdown {
-      position: fixed;       /* 画面に固定 */
-      top: 10px;             /* 画面上部10px */
-      left: 50%;             /* 横中央 */
+      position: fixed;
+      top: 10px;
+      left: 50%;
       transform: translateX(-50%);
       font-size: 48px;
       font-weight: bold;
       color: red;
-      z-index: 9999;         /* 最前面 */
-      background: rgba(255,255,255,0.8); /* 少し背景を半透明にして見やすく */
+      z-index: 9999;
+      background: rgba(255,255,255,0.8);
       padding: 5px 15px;
       border-radius: 8px;
-      pointer-events: none;  /* ボタンなどの操作を邪魔しない */
+      pointer-events: none;
     }
-
-    /* 追加：余分なコントロールの間隔調整 */
+    #measurement {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      font-weight: bold;
+      z-index: 10000;
+    }
     .extra-controls {
       margin-top: 30px;
       display: flex;
@@ -80,12 +78,8 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- どの画面からも見える測定値表示エリア -->
-    <div id="measurement" style="position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: #fff; padding: 8px 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-weight: bold; z-index: 10000;">
-      測定値: --.--
-    </div>
+    <div id="measurement">測定値: --.--</div>
 
-    <!-- メニュー画面 -->
     <div id="menuScreen" class="screen active">
       <h2>メニュー</h2>
       <button id="connectBtn">BLE接続</button>
@@ -93,7 +87,6 @@
       <button onclick="showScreen('autoScreen')">自動モード</button>
     </div>
 
-    <!-- 手動モード画面 -->
     <div id="manualScreen" class="screen">
       <h2>手動モード</h2>
       <button id="btnReady">位置について</button>
@@ -106,7 +99,6 @@
       <button onclick="showScreen('menuScreen')">戻る</button>
     </div>
 
-    <!-- 自動モード画面 -->
     <div id="autoScreen" class="screen">
       <h2>自動モード</h2>
       <div id="countdown"></div>
@@ -119,181 +111,149 @@
     </div>
   </div>
 
-  <!-- 音声ファイルの読み込み -->
   <audio id="audioReady" src="Ready.mp3"></audio>
   <audio id="audioSet" src="Set.mp3"></audio>
   <audio id="audioGo" src="Go.mp3"></audio>
 
-<script>
-  // BLEデバイス・キャラクタリスティックを格納する変数
-  let bleDevice;
-  let bleCharacteristic;
+  <script>
+    let bleDevice;
+    let bleCharacteristic;
 
-  /**
-   * 表示する画面を切り替える関数
-   * @param {string} screenId - 表示する画面のID
-   */
-  function showScreen(screenId) {
-    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-    document.getElementById(screenId).classList.add("active");
-  }
-
-  /**
-   * BLE接続処理
-   */
-  document.getElementById("connectBtn").addEventListener("click", async () => {
-    try {
-      bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
-        optionalServices: ["abcd1234-abcd-1234-abcd-1234567890ab"]
-      });
-
-      const server = await bleDevice.gatt.connect();
-
-      const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
-      bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
-
-      alert("接続成功！");
-    } catch (err) {
-      alert("接続失敗：" + err);
+    function showScreen(screenId) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(screenId).classList.add("active");
     }
-  });
 
-  /**
-   * 手動モード：位置についてボタン
-   */
-  document.getElementById("btnReady").addEventListener("click", () => {
-    document.getElementById("audioReady").play();
-  });
+    // BLE接続＋通知開始処理
+    document.getElementById("connectBtn").addEventListener("click", async () => {
+      try {
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
+          optionalServices: ["12345678-1234-1234-1234-1234567890ab"] // 同じサービス
+        });
 
-  /**
-   * 手動モード：よーいボタン
-   */
-  document.getElementById("btnSet").addEventListener("click", () => {
-    document.getElementById("audioSet").play();
-  });
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
+        bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
 
-  /**
-   * 手動モード：スタートボタン
-   * → 音声再生後にBLEで "start" を送信
-   */
-  document.getElementById("btnStart").addEventListener("click", () => {
-    document.getElementById("audioGo").play();
+        // 通知を有効化
+        await bleCharacteristic.startNotifications();
 
-    setTimeout(async () => {
+        bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+
+        alert("接続と通知受信開始に成功しました");
+      } catch (err) {
+        alert("接続失敗：" + err);
+      }
+    });
+
+    // BLEからの通知を受け取るイベントハンドラ
+    function handleNotifications(event) {
+      const value = event.target.value;
+      // バイナリデータをテキストに変換
+      const decoder = new TextDecoder('utf-8');
+      const receivedText = decoder.decode(value);
+
+      // 例: "123.45" のような数値が来る想定
+      updateMeasurement(receivedText);
+    }
+
+    // 音声再生・送信系ボタン処理（手動モード）
+    document.getElementById("btnReady").addEventListener("click", () => {
+      document.getElementById("audioReady").play();
+    });
+
+    document.getElementById("btnSet").addEventListener("click", () => {
+      document.getElementById("audioSet").play();
+    });
+
+    document.getElementById("btnStart").addEventListener("click", () => {
+      document.getElementById("audioGo").play();
+      setTimeout(async () => {
+        if (bleCharacteristic) {
+          const encoder = new TextEncoder();
+          await bleCharacteristic.writeValue(encoder.encode("start"));
+          alert("スタート送信！");
+        } else {
+          alert("BLEに接続されていません。");
+        }
+      }, 500);
+    });
+
+    // 自動モードシーケンス
+    document.getElementById("sequenceBtn").addEventListener("click", async () => {
+      try {
+        await showCountdown(3);
+        document.getElementById("audioReady").play();
+        await delay(3000);
+        document.getElementById("audioSet").play();
+        await delay(3000);
+        document.getElementById("audioGo").play();
+        await delay(500);
+
+        if (bleCharacteristic) {
+          const encoder = new TextEncoder();
+          await bleCharacteristic.writeValue(encoder.encode("start"));
+          alert("スタート送信！");
+        } else {
+          alert("BLEに接続していません。");
+        }
+      } catch (error) {
+        console.error("エラー：", error);
+      }
+    });
+
+    // 遅延用Promise
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // カウントダウン表示
+    function showCountdown(seconds) {
+      return new Promise((resolve) => {
+        const countdownElem = document.getElementById("countdown");
+        let remaining = seconds;
+        const interval = setInterval(() => {
+          countdownElem.textContent = remaining > 0 ? remaining : "";
+          remaining--;
+          if (remaining < 0) {
+            clearInterval(interval);
+            countdownElem.textContent = "";
+            resolve();
+          }
+        }, 1000);
+      });
+    }
+
+    async function sendStop() {
       if (bleCharacteristic) {
         const encoder = new TextEncoder();
-        await bleCharacteristic.writeValue(encoder.encode("start"));
-        alert("スタート送信！");
+        await bleCharacteristic.writeValue(encoder.encode("stop"));
+        alert("ストップ送信！");
       } else {
         alert("BLEに接続されていません。");
       }
-    }, 500); // 音声再生後に少し待つ
-  });
+    }
 
-  /**
-   * 自動モード：シーケンス開始ボタン
-   * → カウントダウン → 音声 → BLE送信
-   */
-  document.getElementById("sequenceBtn").addEventListener("click", async () => {
-    try {
-      await showCountdown(3);
-
-      document.getElementById("audioReady").play();
-      await delay(3000);
-      document.getElementById("audioSet").play();
-      await delay(3000);
-      document.getElementById("audioGo").play();
-      await delay(500);
-
+    async function sendReset() {
       if (bleCharacteristic) {
         const encoder = new TextEncoder();
-        await bleCharacteristic.writeValue(encoder.encode("start"));
-        alert("スタート送信！");
+        await bleCharacteristic.writeValue(encoder.encode("reset"));
+        alert("リセット送信！");
       } else {
-        alert("BLEに接続していません。");
+        alert("BLEに接続されていません。");
       }
-    } catch (error) {
-      console.error("エラー：", error);
     }
-  });
 
-  /**
-   * 遅延用Promise関数
-   */
-  function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
+    document.getElementById("btnStopManual").addEventListener("click", sendStop);
+    document.getElementById("btnResetManual").addEventListener("click", sendReset);
+    document.getElementById("btnStopAuto").addEventListener("click", sendStop);
+    document.getElementById("btnResetAuto").addEventListener("click", sendReset);
 
-  /**
-   * カウントダウンを画面に表示する関数
-   * @param {number} seconds - 開始カウント（例：3）
-   */
-  function showCountdown(seconds) {
-    return new Promise((resolve) => {
-      const countdownElem = document.getElementById("countdown");
-      let remaining = seconds;
-
-      const interval = setInterval(() => {
-        countdownElem.textContent = remaining > 0 ? remaining : "";
-        remaining--;
-
-        if (remaining < 0) {
-          clearInterval(interval);
-          countdownElem.textContent = "";
-          resolve();
-        }
-      }, 1000);
-    });
-  }
-
-  /**
-   * ストップ信号送信
-   */
-  async function sendStop() {
-    if (bleCharacteristic) {
-      const encoder = new TextEncoder();
-      await bleCharacteristic.writeValue(encoder.encode("stop"));
-      alert("ストップ送信！");
-    } else {
-      alert("BLEに接続されていません。");
+    function updateMeasurement(value) {
+      const elem = document.getElementById("measurement");
+      elem.textContent = `測定値: ${value}`;
     }
-  }
-
-  /**
-   * リセット信号送信
-   */
-  async function sendReset() {
-    if (bleCharacteristic) {
-      const encoder = new TextEncoder();
-      await bleCharacteristic.writeValue(encoder.encode("reset"));
-      alert("リセット送信！");
-    } else {
-      alert("BLEに接続されていません。");
-    }
-  }
-
-  // 手動モードのストップ／リセット
-  document.getElementById("btnStopManual").addEventListener("click", sendStop);
-  document.getElementById("btnResetManual").addEventListener("click", sendReset);
-
-  // 自動モードのストップ／リセット
-  document.getElementById("btnStopAuto").addEventListener("click", sendStop);
-  document.getElementById("btnResetAuto").addEventListener("click", sendReset);
-
-  /**
-   * 測定値の表示更新関数
-   * @param {string} value - 表示する測定値
-   */
-  function updateMeasurement(value) {
-    const elem = document.getElementById("measurement");
-    elem.textContent = `測定値: ${value}`;
-  }
-
-  // テスト用に1秒ごとに値を増やす処理（例）
-  let testValue = 0;
-  setInterval(() => {
-    testValue += 0.1;
-    updateMeasurement(testValue.toFixed(2));
-  }, 1000);
-</script>
+  </script>
+</body>
+</html>
