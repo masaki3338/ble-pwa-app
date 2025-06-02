@@ -70,10 +70,13 @@
 
   document.getElementById("sequence").addEventListener("click", async () => {
   try {
+    await new Promise(resolve => setTimeout(resolve, 2000));
     // 1. 「位置について」再生
     document.getElementById("audioReady").play();
+    await new Promise(resolve => setTimeout(resolve, 2000));
     // 2. 「よーい」再生
     document.getElementById("audioSet").play();
+    await new Promise(resolve => setTimeout(resolve, 2000));
     // 3. 「スタート」再生
     document.getElementById("audioGo").play();
 
