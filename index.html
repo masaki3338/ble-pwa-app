@@ -45,19 +45,18 @@
     }
   });
 
-  document.getElementById("Ready").addEventListener("click", async () => {
+  document.getElementById("Ready").addEventListener("click", () => {
     document.getElementById("audioReady").play();
     alert("位置について！");
   });
 
-  document.getElementById("Set").addEventListener("click", async () => {
+  document.getElementById("Set").addEventListener("click", () => {
     document.getElementById("audioSet").play();
     alert("よーい！");
   });
 
   document.getElementById("sendStart").addEventListener("click", async () => {
     document.getElementById("audioGo").play();
-
     setTimeout(async () => {
       if (bleCharacteristic) {
         const encoder = new TextEncoder();
