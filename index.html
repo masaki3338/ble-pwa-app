@@ -64,12 +64,15 @@
       left: 50%;
       transform: translateX(-50%);
       background: #fff;
-      padding: 12px 24px;
+      padding: 8px 16px;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      font-weight: 900;
-      font-size: 72px;   /* かなり大きめ */
-      color: #222;
+      font-weight: bold;
+      font-size: 48px;          /* 大きく */
+      white-space: nowrap;      /* ここがポイント！改行させない */
+      overflow: hidden;         /* はみ出しを隠す */
+      text-overflow: ellipsis;  /* はみ出しは…に */
+      max-width: 90vw;          /* 画面幅の90%までに制限 */
       z-index: 10000;
     }
     .extra-controls {
@@ -177,7 +180,7 @@
         if (bleCharacteristic) {
           const encoder = new TextEncoder();
           await bleCharacteristic.writeValue(encoder.encode("start"));
-          alert("スタート送信！");
+          //alert("スタート送信！");
         } else {
           alert("BLEに接続されていません。");
         }
@@ -198,7 +201,7 @@
         if (bleCharacteristic) {
           const encoder = new TextEncoder();
           await bleCharacteristic.writeValue(encoder.encode("start"));
-          alert("スタート送信！");
+          //alert("スタート送信！");
         } else {
           alert("BLEに接続していません。");
         }
@@ -237,7 +240,7 @@
       if (bleCharacteristic) {
         const encoder = new TextEncoder();
         await bleCharacteristic.writeValue(encoder.encode("stop"));
-        alert("ストップ送信！");
+        //alert("ストップ送信！");
       } else {
         alert("BLEに接続されていません。");
       }
@@ -247,7 +250,7 @@
       if (bleCharacteristic) {
         const encoder = new TextEncoder();
         await bleCharacteristic.writeValue(encoder.encode("reset"));
-        alert("リセット送信！");
+        //alert("リセット送信！");
       } else {
         alert("BLEに接続されていません。");
       }
