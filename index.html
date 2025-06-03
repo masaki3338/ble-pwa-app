@@ -44,17 +44,19 @@
     }
     #countdown {
       position: fixed;
-      top: 10px;
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%);
-      font-size: 48px;
+      transform: translate(-50%, -50%);
+      font-size: 96px;   /* 大きく目立つ */
       font-weight: bold;
       color: red;
-      z-index: 9999;
-      background: rgba(255,255,255,0.8);
-      padding: 5px 15px;
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      z-index: 99999;
       pointer-events: none;
+      display: none;   /* 最初は非表示 */
     }
     #measurement {
       position: fixed;
@@ -62,10 +64,12 @@
       left: 50%;
       transform: translateX(-50%);
       background: #fff;
-      padding: 8px 16px;
+      padding: 12px 24px;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      font-weight: bold;
+      font-weight: 900;
+      font-size: 72px;   /* かなり大きめ */
+      color: #222;
       z-index: 10000;
     }
     .extra-controls {
@@ -212,13 +216,17 @@
     function showCountdown(seconds) {
       return new Promise((resolve) => {
         const countdownElem = document.getElementById("countdown");
+        countdownElem.style.display = "block";  // 表示開始
         let remaining = seconds;
+        countdownElem.textContent = remaining;
+
         const interval = setInterval(() => {
-          countdownElem.textContent = remaining > 0 ? remaining : "";
           remaining--;
-          if (remaining < 0) {
+          if (remaining > 0) {
+            countdownElem.textContent = remaining;
+          } else {
             clearInterval(interval);
-            countdownElem.textContent = "";
+            countdownElem.style.display = "none";  // 終了したら非表示
             resolve();
           }
         }, 1000);
