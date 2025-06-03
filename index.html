@@ -68,7 +68,7 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       font-weight: bold;
-      font-size: 48px;          /* 大きく */
+      font-size: 72px;          /* 大きく */
       white-space: nowrap;      /* ここがポイント！改行させない */
       overflow: hidden;         /* はみ出しを隠す */
       text-overflow: ellipsis;  /* はみ出しは…に */
@@ -85,7 +85,7 @@
 </head>
 <body>
   <div class="app-container">
-    <div id="measurement">測定値: --.--</div>
+    <div id="measurement">--.--.--</div>
 
     <div id="menuScreen" class="screen active">
       <h2>メニュー</h2>
@@ -263,7 +263,7 @@
 
     function updateMeasurement(value) {
       const elem = document.getElementById("measurement");
-      elem.textContent = `測定値: ${value}`;
+      elem.textContent = `${value}`;
     }
   </script>
 </body>
