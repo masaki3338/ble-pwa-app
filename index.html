@@ -64,7 +64,7 @@
     }
     #measurement {
       position: fixed;
-      top: 10px;
+      top: 60px;
       left: 55%;
       transform: translateX(-50%);
       background: #fff;
@@ -78,6 +78,7 @@
       text-overflow: ellipsis;
       max-width: 90vw;
       z-index: 10000;
+      display: none;
     }
     .extra-controls {
       margin-top: 100px;
@@ -198,10 +199,18 @@
     let bleDevice;
     let bleCharacteristic;
 
-    function showScreen(screenId) {
-      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-      document.getElementById(screenId).classList.add("active");
+  function showScreen(screenId) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(screenId).classList.add("active");
+
+    // 計測表示の表示/非表示を制御
+    const measurement = document.getElementById("measurement");
+    if (screenId === "menuScreen") {
+      measurement.style.display = "none";
+    } else {
+      measurement.style.display = "block";
     }
+  }
 
     function updateAudioSource(selectId, audioId) {
       const selectedFile = document.getElementById(selectId).value;
