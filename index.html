@@ -390,14 +390,36 @@
     }
   }
 
+  // 最新の音声設定を <audio> 要素に反映する
+  function refreshAudioSources() {
+    const readySelect = localStorage.getItem("readySelect") || "Ready.mp3";
+    const setSelect = localStorage.getItem("setSelect") || "Set.mp3";
+    const goSelect = localStorage.getItem("goSelect") || "Go.mp3";
+
+    const audioReady = document.getElementById("audioReady");
+    audioReady.src = readySelect;
+    audioReady.load();
+
+    const audioSet = document.getElementById("audioSet");
+    audioSet.src = setSelect;
+    audioSet.load();
+
+    const audioGo = document.getElementById("audioGo");
+    audioGo.src = goSelect;
+    audioGo.load();
+  }
+
   // 音声操作ボタンイベント（手動モード）
   document.getElementById("btnReady").addEventListener("click", () => {
+    refreshAudioSources();
     document.getElementById("audioReady").play();
   });
   document.getElementById("btnSet").addEventListener("click", () => {
+    refreshAudioSources();
     document.getElementById("audioSet").play();
   });
   document.getElementById("btnStart").addEventListener("click", () => {
+    refreshAudioSources();
     document.getElementById("audioGo").play();
     if (bleCharacteristic) {
       setTimeout(() => {
@@ -450,23 +472,24 @@
   }
 
   async function runFixedSequence(times) {
+    refreshAudioSources(); // ← ここで最新音声ファイルに更新
+
     const countdown = document.getElementById("countdown");
 
-    // 現在の音声設定値を取得
-    const readyAudio = localStorage.getItem("readySelect") || "Ready.mp3";
-    const setAudio = localStorage.getItem("setSelect") || "Set.mp3";
-    const goAudio = localStorage.getItem("goSelect") || "Go.mp3";
+    const readyAudioFile = localStorage.getItem("readySelect") || "Ready.mp3";
+    const setAudioFile = localStorage.getItem("setSelect") || "Set.mp3";
+    const goAudioFile = localStorage.getItem("goSelect") || "Go.mp3";
 
     await delay(times[0] * 1000);
-    countdown.textContent = getDisplayTextForAudio(readyAudio);
+    countdown.textContent = getDisplayTextForAudio(readyAudioFile);
     document.getElementById("audioReady").play();
 
     await delay(times[1] * 1000);
-    countdown.textContent = getDisplayTextForAudio(setAudio);
+    countdown.textContent = getDisplayTextForAudio(setAudioFile);
     document.getElementById("audioSet").play();
 
     await delay(times[2] * 1000);
-    countdown.textContent = getDisplayTextForAudio(goAudio);
+    countdown.textContent = getDisplayTextForAudio(goAudioFile);
     document.getElementById("audioGo").play();
 
     if (bleCharacteristic) {
@@ -477,25 +500,27 @@
   }
 
   async function runRandomSequence() {
+    refreshAudioSources(); // ← ここも
+
     const countdown = document.getElementById("countdown");
 
-    const readyAudio = localStorage.getItem("readySelect") || "Ready.mp3";
-    const setAudio = localStorage.getItem("setSelect") || "Set.mp3";
-    const goAudio = localStorage.getItem("goSelect") || "Go.mp3";
+    const readyAudioFile = localStorage.getItem("readySelect") || "Ready.mp3";
+    const setAudioFile = localStorage.getItem("setSelect") || "Set.mp3";
+    const goAudioFile = localStorage.getItem("goSelect") || "Go.mp3";
 
-    countdown.textContent = getDisplayTextForAudio(readyAudio);
+    countdown.textContent = getDisplayTextForAudio(readyAudioFile);
     document.getElementById("audioReady").play();
 
-    // ランダム3～7秒待機
+    // 3～7秒のランダム待機
     const randomWait = 3000 + Math.random() * 4000;
     await delay(randomWait);
 
-    countdown.textContent = getDisplayTextForAudio(setAudio);
+    countdown.textContent = getDisplayTextForAudio(setAudioFile);
     document.getElementById("audioSet").play();
 
     await delay(1000);
 
-    countdown.textContent = getDisplayTextForAudio(goAudio);
+    countdown.textContent = getDisplayTextForAudio(goAudioFile);
     document.getElementById("audioGo").play();
 
     if (bleCharacteristic) {
@@ -505,13 +530,13 @@
     countdown.textContent = "";
   }
 
-  // ページロード時にスタート設定読み込み
+  // ページロード時にスタート設定をロード
   window.addEventListener("load", () => {
     loadStartSettings();
     updateBleStatus(false);
   });
 
-  // BLE接続ボタン
+  // BLE接続ボタンイベント
   document.getElementById("connectBtn").addEventListener("click", () => {
     connectBle();
   });
