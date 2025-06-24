@@ -123,11 +123,16 @@
 </head>
 <body>
   <div class="app-container">
+    <!-- BLEステータス -->
     <div id="bleStatus">
       <span id="bleIcon">🔴</span>
       <span id="bleText">未接続</span>
     </div>
+
+    <!-- 計測表示（手動・自動モードのみ） -->
     <div id="measurement">--.--.--</div>
+
+    <!-- メニュー -->
     <div id="menuScreen" class="screen active">
       <h2>メニュー</h2>
       <button id="connectBtn">BLE接続</button>
@@ -135,12 +140,16 @@
       <button onclick="showScreen('autoScreen')">自動モード</button>
       <button onclick="showScreen('settingsMenuScreen')">設定</button>
     </div>
+
+    <!-- 設定メニュー -->
     <div id="settingsMenuScreen" class="screen">
       <h2>設定メニュー</h2>
       <button onclick="showScreen('settingsScreen')">音声設定</button>
       <button onclick="alert('スタート設定は今後追加予定です');">スタート設定</button>
       <button onclick="showScreen('menuScreen')">戻る</button>
     </div>
+
+    <!-- 音声設定 -->
     <div id="settingsScreen" class="screen">
       <h2>音声設定</h2>
       <div class="setting-card">
@@ -166,6 +175,8 @@
       </div>
       <button onclick="showScreen('settingsMenuScreen')">戻る</button>
     </div>
+
+    <!-- 手動モード -->
     <div id="manualScreen" class="screen">
       <h2>手動モード</h2>
       <button id="btnReady">位置について</button>
@@ -177,6 +188,8 @@
       </div>
       <button onclick="showScreen('menuScreen')">戻る</button>
     </div>
+
+    <!-- 自動モード -->
     <div id="autoScreen" class="screen">
       <h2>自動モード</h2>
       <div id="countdown"></div>
@@ -188,64 +201,24 @@
       <button onclick="showScreen('menuScreen')">戻る</button>
     </div>
   </div>
+
+  <!-- 音声ファイル -->
   <audio id="audioReady" src="Ready.mp3"></audio>
   <audio id="audioSet" src="Set.mp3"></audio>
   <audio id="audioGo" src="Go.mp3"></audio>
+
   <script>
     let bleDevice = null;
     let bleCharacteristic = null;
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 5;
 
-    function tryReconnect() {
-      if (!bleDevice || reconnectAttempts >= maxReconnectAttempts) {
-        console.log("再接続試行上限に達しました");
-        return;
-      }
-      reconnectAttempts++;
-      console.log(`再接続試行 ${reconnectAttempts} 回目...`);
-      setTimeout(async () => {
-        try {
-          const server = await bleDevice.gatt.connect();
-          const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
-          bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
-          await bleCharacteristic.startNotifications();
-          bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
-          updateBleStatus(true);
-          alert("BLE再接続成功");
-          reconnectAttempts = 0;
-        } catch (err) {
-          console.warn("再接続失敗", err);
-          tryReconnect();
-        }
-      }, 5000);
+    function showScreen(screenId) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(screenId).classList.add("active");
+
+      // 測定値表示：手動・自動モードのみ表示
+      const showMeasurement = screenId === "manualScreen" || screenId === "autoScreen";
+      document.getElementById("measurement").style.display = showMeasurement ? "block" : "none";
     }
-
-    document.getElementById("connectBtn").addEventListener("click", async () => {
-      try {
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
-          optionalServices: ["12345678-1234-1234-1234-1234567890ab"]
-        });
-        bleDevice.addEventListener("gattserverdisconnected", () => {
-          updateBleStatus(false);
-          alert("BLE接続が切れました。再接続を試みます。");
-          tryReconnect();
-        });
-
-        const server = await bleDevice.gatt.connect();
-        const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
-        bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
-        await bleCharacteristic.startNotifications();
-        bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
-        updateBleStatus(true);
-        alert("接続成功");
-        reconnectAttempts = 0;
-      } catch (err) {
-        alert("接続失敗：" + err);
-        updateBleStatus(false);
-      }
-    });
 
     function updateBleStatus(connected) {
       const icon = document.getElementById("bleIcon");
@@ -262,9 +235,33 @@
       }
     }
 
+    document.getElementById("connectBtn").addEventListener("click", async () => {
+      try {
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }]
+        });
+        bleDevice.addEventListener("gattserverdisconnected", () => {
+          updateBleStatus(false);
+          alert("BLE接続が切れました");
+        });
+
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
+        bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
+        await bleCharacteristic.startNotifications();
+        bleCharacteristic.addEventListener("characteristicvaluechanged", handleNotifications);
+
+        updateBleStatus(true);
+        alert("接続成功");
+      } catch (err) {
+        alert("接続失敗：" + err);
+        updateBleStatus(false);
+      }
+    });
+
     function handleNotifications(event) {
       const value = event.target.value;
-      const decoder = new TextDecoder('utf-8');
+      const decoder = new TextDecoder("utf-8");
       document.getElementById("measurement").textContent = decoder.decode(value);
     }
 
@@ -344,6 +341,7 @@
       });
     });
 
+    // 初期状態でBLEアイコンを未接続に設定
     updateBleStatus(false);
   </script>
 </body>
