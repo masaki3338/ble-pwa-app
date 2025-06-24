@@ -222,6 +222,12 @@
     <!-- 自動モード -->
     <div id="autoScreen" class="screen">
       <h2>自動モード</h2>
+      <div class="setting-card">
+        <div class="radio-group" id="autoModeRadioGroup">
+          <label><input type="radio" name="autoMode" value="fixed" /> 固定</label>
+          <label><input type="radio" name="autoMode" value="random" /> ランダム</label>
+        </div>
+      </div>
       <div id="countdown"></div>
       <div id="measurementAuto">--.--.--</div>
       <button id="sequenceBtn">シーケンス開始</button>
@@ -350,6 +356,17 @@
       }
     });
   });
+
+  function loadAutoModeSelection() {
+    const mode = localStorage.getItem("startMode") || "fixed";
+    const radios = document.querySelectorAll('input[name="autoMode"]');
+    radios.forEach(radio => {
+      radio.checked = (radio.value === mode);
+      radio.addEventListener("change", () => {
+        localStorage.setItem("startMode", radio.value);
+      });
+    });
+  }
 
   // スタート設定の読み込み・保存
   function loadStartSettings() {
@@ -545,6 +562,7 @@
   // ページロード時にスタート設定をロード
   window.addEventListener("load", () => {
     loadStartSettings();
+    loadAutoModeSelection(); // ← ここを追加
     updateBleStatus(false);
   });
 
