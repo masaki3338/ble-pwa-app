@@ -588,72 +588,72 @@ btnStart.addEventListener('click', () => {
   });
 
   // 自動シーケンス開始
-  function startAutoSequence() {
-    autoSequenceRunning = true;
-    countdownDisplay.textContent = '';
-    autoMeasurementDisplay.textContent = '--.--.--';
+function startAutoSequence() {
+  autoSequenceRunning = true;
+  autoMeasurementDisplay.textContent = '--.--.--';
 
-    // スタート設定値取得（秒）
-    let timeReady = parseFloat(timeReadyInput.value) || 3.0;
-    let timeSet = parseFloat(timeSetInput.value) || 2.0;
-    let timeGo = parseFloat(timeGoInput.value) || 1.0;
+  let preCountdown = 5.0;
+  countdownDisplay.textContent = preCountdown.toFixed(2);
 
-    // 選択モード取得
-    const autoMode = [...autoModeRadios].find(r => r.checked)?.value || 'fixed';
-
-    // ランダムモードならtimeGoをランダム化
-    if (autoMode === 'random') {
-      timeGo = 1 + Math.random() * 3; // 1〜4秒ランダム
+  const preCountdownInterval = setInterval(() => {
+    preCountdown -= 0.1;
+    if (preCountdown <= 0) {
+      clearInterval(preCountdownInterval);
+      countdownDisplay.textContent = '';
+      startSequenceAfterCountdown(); // ← ここで本番シーケンスへ
+    } else {
+      countdownDisplay.textContent = preCountdown.toFixed(2);
     }
+  }, 100);
+}
+function startSequenceAfterCountdown() {
+  // スタート設定値取得（秒）
+  let timeReady = parseFloat(timeReadyInput.value) || 3.0;
+  let timeSet = parseFloat(timeSetInput.value) || 2.0;
+  let timeGo = parseFloat(timeGoInput.value) || 1.0;
 
-    // カウントダウン合計
-    let totalSeconds = timeReady + timeSet + timeGo;
-    countdownValue = totalSeconds;
-
-    // 1秒刻みカウントダウン（100ms精度で更新）
-    clearAutoTimers();
-
-    // タイマー間隔
-    const intervalMs = 100;
-
-    // 現在経過時間（秒）
-    let elapsed = 0;
-
-    // イベントスケジューリング
-    // 位置について 音声再生
-    autoTimers.push(setTimeout(() => {
-      playAudio('ready');
-      autoMeasurementDisplay.textContent = '位置について';
-      sendBle('READY');
-    }, 0));
-
-    // よーい 音声再生
-    autoTimers.push(setTimeout(() => {
-      playAudio('set');
-      autoMeasurementDisplay.textContent = 'よーい';
-      sendBle('SET');
-    }, timeReady * 1000));
-
-    // スタート 音声再生
-    autoTimers.push(setTimeout(() => {
-      playAudio('go');
-      autoMeasurementDisplay.textContent = 'スタート！';
-      sendBle('GO');
-    }, (timeReady + timeSet) * 1000));
-
-    // カウントダウン表示用のインターバル
-    autoTimers.push(setInterval(() => {
-      countdownValue -= intervalMs / 1000;
-      if (countdownValue < 0) countdownValue = 0;
-      countdownDisplay.textContent = countdownValue.toFixed(2);
-
-      if (countdownValue <= 0) {
-        clearAutoTimers();
-        autoSequenceRunning = false;
-      }
-    }, intervalMs));
+  const autoMode = [...autoModeRadios].find(r => r.checked)?.value || 'fixed';
+  if (autoMode === 'random') {
+    timeGo = 1 + Math.random() * 3;
   }
 
+  clearAutoTimers();
+  countdownValue = timeReady + timeSet + timeGo;
+
+  // 位置について
+  autoTimers.push(setTimeout(() => {
+    playAudio('ready');
+    autoMeasurementDisplay.textContent = '位置について';
+    sendBle('READY');
+  }, 0));
+
+  // よーい
+  autoTimers.push(setTimeout(() => {
+    playAudio('set');
+    autoMeasurementDisplay.textContent = 'よーい';
+    sendBle('SET');
+  }, timeReady * 1000));
+
+  // スタート
+  autoTimers.push(setTimeout(() => {
+    playAudio('go');
+    autoMeasurementDisplay.textContent = 'スタート！';
+    sendBle('GO');
+  }, (timeReady + timeSet) * 1000));
+
+  // カウントダウン表示
+  const intervalMs = 100;
+  autoTimers.push(setInterval(() => {
+    countdownValue -= intervalMs / 1000;
+    if (countdownValue < 0) countdownValue = 0;
+    countdownDisplay.textContent = countdownValue.toFixed(2);
+
+    if (countdownValue <= 0) {
+      clearAutoTimers();
+      autoSequenceRunning = false;
+    }
+  }, intervalMs));
+}
   // タイマークリア
   function clearAutoTimers() {
     autoTimers.forEach(id => clearTimeout(id));
