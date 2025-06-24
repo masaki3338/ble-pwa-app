@@ -24,7 +24,7 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       padding: 20px;
       box-sizing: border-box;
-       }
+    }
     .screen {
       display: none;
       flex-direction: column;
@@ -89,8 +89,6 @@
     .settings-group {
       margin-top: 20px;
     }
-
-    /* スマホっぽく音声設定をカード風に */
     .settings-group h3 {
       margin-bottom: 10px;
       font-size: 20px;
@@ -128,10 +126,53 @@
       border-color: #007bff;
       box-shadow: 0 0 5px rgba(0,123,255,0.5);
     }
+
+    .ble-status {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      background-color: #ccc;
+      color: #000;
+      padding: 6px 12px 6px 34px;
+      border-radius: 8px;
+      z-index: 10001;
+      background-repeat: no-repeat;
+      background-position: 8px center;
+      background-size: 20px;
+    }
+    .ble-connected {
+      background-color: #28a745;
+      color: #fff;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%23fff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.71 7.71L13.41 12l4.3 4.29-1.42 1.42L11 13.41V20h-2v-7.59L5.41 17.7 4 16.29 8.29 12 4 7.71 5.41 6.3 9 9.59V2h2v6.59l5.29-5.3z"/></svg>');
+    }
+    .ble-disconnected {
+      background-color: #dc3545;
+      color: #fff;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%23fff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.71 7.71L13.41 12l4.3 4.29-1.42 1.42L11 13.41V20h-2v-7.59L5.41 17.7 4 16.29 8.29 12 4 7.71 5.41 6.3 9 9.59V2h2v6.59l5.29-5.3z"/></svg>');
+    }
+
+    #reconnectBtn {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      background-color: #007bff;
+      color: #fff;
+      cursor: pointer;
+      z-index: 10001;
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="app-container">
+    <div id="bleStatus" class="ble-status ble-disconnected">未接続</div>
+    <button id="reconnectBtn">再接続</button>
     <div id="measurement">--.--.--</div>
 
     <div id="menuScreen" class="screen active">
@@ -144,21 +185,21 @@
         <h3>音声設定</h3>
         <div class="setting-card">
           <label for="readySelect">Ready</label>
-          <select id="readySelect" name="readySelect">
+          <select id="readySelect">
             <option value="Ready.mp3">On Your Marks</option>
             <option value="Ready-jp.mp3">位置について</option>
           </select>
         </div>
         <div class="setting-card">
           <label for="setSelect">Set</label>
-          <select id="setSelect" name="setSelect">
+          <select id="setSelect">
             <option value="Set.mp3">Set</option>
             <option value="Set-jp.mp3">よーい</option>
           </select>
         </div>
         <div class="setting-card">
           <label for="goSelect">スタート音</label>
-          <select id="goSelect" name="goSelect">
+          <select id="goSelect">
             <option value="Go.mp3">ピストル</option>
             <option value="whistle.mp3">笛</option>
           </select>
@@ -199,18 +240,27 @@
     let bleDevice;
     let bleCharacteristic;
 
-  function showScreen(screenId) {
-    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-    document.getElementById(screenId).classList.add("active");
-
-    // 計測表示の表示/非表示を制御
-    const measurement = document.getElementById("measurement");
-    if (screenId === "menuScreen") {
-      measurement.style.display = "none";
-    } else {
-      measurement.style.display = "block";
+    function updateBLEStatus(connected) {
+      const el = document.getElementById("bleStatus");
+      const reconnectBtn = document.getElementById("reconnectBtn");
+      if (connected) {
+        el.textContent = "接続中";
+        el.classList.add("ble-connected");
+        el.classList.remove("ble-disconnected");
+        reconnectBtn.style.display = "none";
+      } else {
+        el.textContent = "未接続";
+        el.classList.add("ble-disconnected");
+        el.classList.remove("ble-connected");
+        reconnectBtn.style.display = "block";
+      }
     }
-  }
+
+    function showScreen(screenId) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(screenId).classList.add("active");
+      document.getElementById("measurement").style.display = screenId === "menuScreen" ? "none" : "block";
+    }
 
     function updateAudioSource(selectId, audioId) {
       const selectedFile = document.getElementById(selectId).value;
@@ -227,7 +277,7 @@
       });
     });
 
-    document.getElementById("connectBtn").addEventListener("click", async () => {
+    async function connectBLE() {
       try {
         bleDevice = await navigator.bluetooth.requestDevice({
           filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
@@ -239,17 +289,31 @@
 
         await bleCharacteristic.startNotifications();
         bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+
+        bleDevice.addEventListener("gattserverdisconnected", () => {
+          updateBLEStatus(false);
+          alert("BLEが切断されました");
+        });
+
+        updateBLEStatus(true);
         alert("接続と通知受信開始に成功しました");
       } catch (err) {
         alert("接続失敗：" + err);
       }
-    });
+    }
+
+    document.getElementById("connectBtn").addEventListener("click", connectBLE);
+    document.getElementById("reconnectBtn").addEventListener("click", connectBLE);
 
     function handleNotifications(event) {
       const value = event.target.value;
       const decoder = new TextDecoder('utf-8');
       const receivedText = decoder.decode(value);
       updateMeasurement(receivedText);
+    }
+
+    function updateMeasurement(text) {
+      document.getElementById("measurement").textContent = text;
     }
 
     document.getElementById("btnReady").addEventListener("click", () => {
@@ -262,30 +326,24 @@
 
     document.getElementById("btnStart").addEventListener("click", () => {
       document.getElementById("audioGo").play();
-      setTimeout(async () => {
+      setTimeout(() => {
         if (bleCharacteristic) {
           const encoder = new TextEncoder();
-          await bleCharacteristic.writeValue(encoder.encode("start"));
-        } else {
-          alert("BLEに接続されていません。");
+          bleCharacteristic.writeValue(encoder.encode("start"));
         }
       }, 500);
     });
 
     document.getElementById("sequenceBtn").addEventListener("click", async () => {
-      try {
-        await showCountdown(3);
-        document.getElementById("audioReady").play();
-        await delay(3000);
-        document.getElementById("audioSet").play();
-        await delay(3000);
-        document.getElementById("audioGo").play();
-        if (bleCharacteristic) {
-          const encoder = new TextEncoder();
-          await bleCharacteristic.writeValue(encoder.encode("start"));
-        }
-      } catch (e) {
-        alert("エラーが発生しました：" + e);
+      await showCountdown(3);
+      document.getElementById("audioReady").play();
+      await delay(3000);
+      document.getElementById("audioSet").play();
+      await delay(3000);
+      document.getElementById("audioGo").play();
+      if (bleCharacteristic) {
+        const encoder = new TextEncoder();
+        bleCharacteristic.writeValue(encoder.encode("start"));
       }
     });
 
@@ -303,40 +361,26 @@
       countdown.style.display = "none";
     }
 
-    function updateMeasurement(text) {
-      const el = document.getElementById("measurement");
-      el.textContent = text;
-    }
-
-    document.getElementById("btnStopManual").addEventListener("click", () => {
-      if (bleCharacteristic) {
-        const encoder = new TextEncoder();
-        bleCharacteristic.writeValue(encoder.encode("stop"));
-      }
+    ["btnStopManual", "btnStopAuto"].forEach(id => {
+      document.getElementById(id).addEventListener("click", () => {
+        if (bleCharacteristic) {
+          const encoder = new TextEncoder();
+          bleCharacteristic.writeValue(encoder.encode("stop"));
+        }
+      });
     });
 
-    document.getElementById("btnResetManual").addEventListener("click", () => {
-      if (bleCharacteristic) {
-        const encoder = new TextEncoder();
-        bleCharacteristic.writeValue(encoder.encode("reset"));
-      }
-      updateMeasurement("--.--.--");
+    ["btnResetManual", "btnResetAuto"].forEach(id => {
+      document.getElementById(id).addEventListener("click", () => {
+        if (bleCharacteristic) {
+          const encoder = new TextEncoder();
+          bleCharacteristic.writeValue(encoder.encode("reset"));
+        }
+        updateMeasurement("--.--.--");
+      });
     });
 
-    document.getElementById("btnStopAuto").addEventListener("click", () => {
-      if (bleCharacteristic) {
-        const encoder = new TextEncoder();
-        bleCharacteristic.writeValue(encoder.encode("stop"));
-      }
-    });
-
-    document.getElementById("btnResetAuto").addEventListener("click", () => {
-      if (bleCharacteristic) {
-        const encoder = new TextEncoder();
-        bleCharacteristic.writeValue(encoder.encode("reset"));
-      }
-      updateMeasurement("--.--.--");
-    });
+    updateBLEStatus(false); // 初期表示
   </script>
 </body>
 </html>
