@@ -441,15 +441,15 @@
 
   // 自動モード制御
   document.getElementById("sequenceBtn").addEventListener("click", async () => {
+    await runStartCountdown(); // 🔽 5秒カウントダウンを追加
+
     const mode = localStorage.getItem("startMode") || "fixed";
     if (mode === "fixed") {
-      // 固定シーケンス
       const tReady = parseFloat(localStorage.getItem("timeReady")) || 2.0;
       const tSet = parseFloat(localStorage.getItem("timeSet")) || 3.0;
       const tGo = parseFloat(localStorage.getItem("timeGo")) || 4.0;
       await runFixedSequence([tReady, tSet, tGo]);
     } else {
-      // ランダムシーケンス
       await runRandomSequence();
     }
   });
@@ -471,6 +471,13 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  async function runStartCountdown() {
+    const countdown = document.getElementById("countdown");
+    for (let i = 5; i >= 1; i--) {
+      countdown.textContent = i.toString();
+      await delay(1000);
+    }
+  }
   async function runFixedSequence(times) {
     refreshAudioSources(); // ← ここで最新音声ファイルに更新
 
