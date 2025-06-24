@@ -1,4 +1,4 @@
-ATHLETE'S ROAD<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -74,8 +74,6 @@ ATHLETE'S ROAD<!DOCTYPE html>
       font-weight: bold;
       font-size: 72px;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       max-width: 90vw;
       z-index: 10000;
       display: none;
@@ -86,24 +84,12 @@ ATHLETE'S ROAD<!DOCTYPE html>
       flex-direction: column;
       gap: 10px;
     }
-    .settings-group {
-      margin-top: 20px;
-    }
-    .settings-group h3 {
-      margin-bottom: 10px;
-      font-size: 20px;
-      color: #222;
-      font-weight: 600;
-    }
     .setting-card {
       background: #fafafa;
       padding: 14px 18px;
       border-radius: 14px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.1);
-      margin-bottom: 5px;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
+      margin-bottom: 10px;
     }
     .setting-card label {
       font-size: 15px;
@@ -120,93 +106,58 @@ ATHLETE'S ROAD<!DOCTYPE html>
       appearance: none;
       outline-offset: 2px;
       cursor: pointer;
-      transition: border-color 0.3s ease;
-    }
-    .setting-card select:focus {
-      border-color: #007bff;
-      box-shadow: 0 0 5px rgba(0,123,255,0.5);
-    }
-
-    .ble-status {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      font-size: 14px;
-      font-weight: bold;
-      background-color: #ccc;
-      color: #000;
-      padding: 6px 12px 6px 34px;
-      border-radius: 8px;
-      z-index: 10001;
-      background-repeat: no-repeat;
-      background-position: 8px center;
-      background-size: 20px;
-    }
-    .ble-connected {
-      background-color: #28a745;
-      color: #fff;
-      background-image: url('data:image/svg+xml;utf8,<svg fill="%23fff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.71 7.71L13.41 12l4.3 4.29-1.42 1.42L11 13.41V20h-2v-7.59L5.41 17.7 4 16.29 8.29 12 4 7.71 5.41 6.3 9 9.59V2h2v6.59l5.29-5.3z"/></svg>');
-    }
-    .ble-disconnected {
-      background-color: #dc3545;
-      color: #fff;
-      background-image: url('data:image/svg+xml;utf8,<svg fill="%23fff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.71 7.71L13.41 12l4.3 4.29-1.42 1.42L11 13.41V20h-2v-7.59L5.41 17.7 4 16.29 8.29 12 4 7.71 5.41 6.3 9 9.59V2h2v6.59l5.29-5.3z"/></svg>');
-    }
-
-    #reconnectBtn {
-      position: fixed;
-      top: 60px;
-      right: 20px;
-      font-size: 12px;
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: none;
-      background-color: #007bff;
-      color: #fff;
-      cursor: pointer;
-      z-index: 10001;
-      display: none;
     }
   </style>
 </head>
 <body>
   <div class="app-container">
-    <div id="bleStatus" class="ble-status ble-disconnected">未接続</div>
-    <button id="reconnectBtn">再接続</button>
     <div id="measurement">--.--.--</div>
 
+    <!-- メニュー画面 -->
     <div id="menuScreen" class="screen active">
       <h2>メニュー</h2>
       <button id="connectBtn">BLE接続</button>
       <button onclick="showScreen('manualScreen')">手動モード</button>
       <button onclick="showScreen('autoScreen')">自動モード</button>
-
-      <div class="settings-group">
-        <h3>音声設定</h3>
-        <div class="setting-card">
-          <label for="readySelect">Ready</label>
-          <select id="readySelect">
-            <option value="Ready.mp3">On Your Marks</option>
-            <option value="Ready-jp.mp3">位置について</option>
-          </select>
-        </div>
-        <div class="setting-card">
-          <label for="setSelect">Set</label>
-          <select id="setSelect">
-            <option value="Set.mp3">Set</option>
-            <option value="Set-jp.mp3">よーい</option>
-          </select>
-        </div>
-        <div class="setting-card">
-          <label for="goSelect">スタート音</label>
-          <select id="goSelect">
-            <option value="Go.mp3">ピストル</option>
-            <option value="whistle.mp3">笛</option>
-          </select>
-        </div>
-      </div>
+      <button onclick="showScreen('settingsMenuScreen')">設定</button>
     </div>
 
+    <!-- 設定メニュー画面 -->
+    <div id="settingsMenuScreen" class="screen">
+      <h2>設定メニュー</h2>
+      <button onclick="showScreen('settingsScreen')">音声設定</button>
+      <button onclick="alert('スタート設定は今後追加予定です');">スタート設定</button>
+      <button onclick="showScreen('menuScreen')">戻る</button>
+    </div>
+
+    <!-- 音声設定画面 -->
+    <div id="settingsScreen" class="screen">
+      <h2>音声設定</h2>
+      <div class="setting-card">
+        <label for="readySelect">Ready</label>
+        <select id="readySelect">
+          <option value="Ready.mp3">On Your Marks</option>
+          <option value="Ready-jp.mp3">位置について</option>
+        </select>
+      </div>
+      <div class="setting-card">
+        <label for="setSelect">Set</label>
+        <select id="setSelect">
+          <option value="Set.mp3">Set</option>
+          <option value="Set-jp.mp3">よーい</option>
+        </select>
+      </div>
+      <div class="setting-card">
+        <label for="goSelect">スタート音</label>
+        <select id="goSelect">
+          <option value="Go.mp3">ピストル</option>
+          <option value="whistle.mp3">笛</option>
+        </select>
+      </div>
+      <button onclick="showScreen('settingsMenuScreen')">戻る</button>
+    </div>
+
+    <!-- 手動モード -->
     <div id="manualScreen" class="screen">
       <h2>手動モード</h2>
       <button id="btnReady">位置について</button>
@@ -219,6 +170,7 @@ ATHLETE'S ROAD<!DOCTYPE html>
       <button onclick="showScreen('menuScreen')">戻る</button>
     </div>
 
+    <!-- 自動モード -->
     <div id="autoScreen" class="screen">
       <h2>自動モード</h2>
       <div id="countdown"></div>
@@ -231,7 +183,7 @@ ATHLETE'S ROAD<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- Audio Elements -->
+  <!-- 音声ファイル -->
   <audio id="audioReady" src="Ready.mp3"></audio>
   <audio id="audioSet" src="Set.mp3"></audio>
   <audio id="audioGo" src="Go.mp3"></audio>
@@ -240,44 +192,15 @@ ATHLETE'S ROAD<!DOCTYPE html>
     let bleDevice;
     let bleCharacteristic;
 
-    function updateBLEStatus(connected) {
-      const el = document.getElementById("bleStatus");
-      const reconnectBtn = document.getElementById("reconnectBtn");
-      if (connected) {
-        el.textContent = "接続中";
-        el.classList.add("ble-connected");
-        el.classList.remove("ble-disconnected");
-        reconnectBtn.style.display = "none";
-      } else {
-        el.textContent = "未接続";
-        el.classList.add("ble-disconnected");
-        el.classList.remove("ble-connected");
-        reconnectBtn.style.display = "block";
-      }
-    }
-
     function showScreen(screenId) {
       document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
       document.getElementById(screenId).classList.add("active");
-      document.getElementById("measurement").style.display = screenId === "menuScreen" ? "none" : "block";
+
+      const measurement = document.getElementById("measurement");
+      measurement.style.display = screenId === "menuScreen" ? "none" : "block";
     }
 
-    function updateAudioSource(selectId, audioId) {
-      const selectedFile = document.getElementById(selectId).value;
-      const audio = document.getElementById(audioId);
-      audio.src = selectedFile;
-      audio.load();
-    }
-
-    ["readySelect", "setSelect", "goSelect"].forEach(id => {
-      document.getElementById(id).addEventListener("change", () => {
-        updateAudioSource("readySelect", "audioReady");
-        updateAudioSource("setSelect", "audioSet");
-        updateAudioSource("goSelect", "audioGo");
-      });
-    });
-
-    async function connectBLE() {
+    document.getElementById("connectBtn").addEventListener("click", async () => {
       try {
         bleDevice = await navigator.bluetooth.requestDevice({
           filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
@@ -286,64 +209,66 @@ ATHLETE'S ROAD<!DOCTYPE html>
         const server = await bleDevice.gatt.connect();
         const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
         bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
-
         await bleCharacteristic.startNotifications();
         bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
-
-        bleDevice.addEventListener("gattserverdisconnected", () => {
-          updateBLEStatus(false);
-          alert("BLEが切断されました");
-        });
-
-        updateBLEStatus(true);
-        alert("接続と通知受信開始に成功しました");
+        alert("接続成功");
       } catch (err) {
         alert("接続失敗：" + err);
       }
-    }
-
-    document.getElementById("connectBtn").addEventListener("click", connectBLE);
-    document.getElementById("reconnectBtn").addEventListener("click", connectBLE);
+    });
 
     function handleNotifications(event) {
       const value = event.target.value;
       const decoder = new TextDecoder('utf-8');
-      const receivedText = decoder.decode(value);
-      updateMeasurement(receivedText);
+      updateMeasurement(decoder.decode(value));
     }
 
     function updateMeasurement(text) {
       document.getElementById("measurement").textContent = text;
     }
 
-    document.getElementById("btnReady").addEventListener("click", () => {
-      document.getElementById("audioReady").play();
-    });
-
-    document.getElementById("btnSet").addEventListener("click", () => {
-      document.getElementById("audioSet").play();
-    });
-
-    document.getElementById("btnStart").addEventListener("click", () => {
-      document.getElementById("audioGo").play();
-      setTimeout(() => {
-        if (bleCharacteristic) {
-          const encoder = new TextEncoder();
-          bleCharacteristic.writeValue(encoder.encode("start"));
+    ["btnReady", "btnSet", "btnStart"].forEach((id, i) => {
+      const audioIds = ["audioReady", "audioSet", "audioGo"];
+      document.getElementById(id).addEventListener("click", async () => {
+        document.getElementById(audioIds[i]).play();
+        if (id === "btnStart" && bleCharacteristic) {
+          setTimeout(() => {
+            bleCharacteristic.writeValue(new TextEncoder().encode("start"));
+          }, 500);
         }
-      }, 500);
+      });
+    });
+
+    ["btnStopManual", "btnStopAuto"].forEach(id => {
+      document.getElementById(id).addEventListener("click", () => {
+        if (bleCharacteristic) {
+          bleCharacteristic.writeValue(new TextEncoder().encode("stop"));
+        }
+      });
+    });
+
+    ["btnResetManual", "btnResetAuto"].forEach(id => {
+      document.getElementById(id).addEventListener("click", () => {
+        if (bleCharacteristic) {
+          bleCharacteristic.writeValue(new TextEncoder().encode("reset"));
+        }
+        updateMeasurement("--.--.--");
+      });
     });
 
     document.getElementById("sequenceBtn").addEventListener("click", async () => {
-      await showCountdown(3);
-      document.getElementById("audioReady").play();
-      await delay(3000);
-      document.getElementById("audioSet").play();
-      await delay(3000);
-      document.getElementById("audioGo").play();
-      if (bleCharacteristic) {
-        const encoder = new TextEncoder();
-        bleCharacteristic.writeValue(encoder.encode("start"));
+      try {
+        await showCountdown(3);
+        document.getElementById("audioReady").play();
+        await delay(3000);
+        document.getElementById("audioSet").play();
+        await delay(3000);
+        document.getElementById("audioGo").play();
+        if (bleCharacteristic) {
+          bleCharacteristic.writeValue(new TextEncoder().encode("start"));
+        }
+      } catch (e) {
+        alert("エラー：" + e);
       }
     });
 
@@ -361,26 +286,30 @@ ATHLETE'S ROAD<!DOCTYPE html>
       countdown.style.display = "none";
     }
 
-    ["btnStopManual", "btnStopAuto"].forEach(id => {
-      document.getElementById(id).addEventListener("click", () => {
-        if (bleCharacteristic) {
-          const encoder = new TextEncoder();
-          bleCharacteristic.writeValue(encoder.encode("stop"));
+    // 音声設定の保存と初期化
+    ["readySelect", "setSelect", "goSelect"].forEach(id => {
+      const select = document.getElementById(id);
+      if (select) {
+        const stored = localStorage.getItem(id);
+        if (stored) {
+          select.value = stored;
+          const audio = document.getElementById(id.replace("Select", "audio"));
+          if (audio) {
+            audio.src = stored;
+            audio.load();
+          }
         }
-      });
+        select.addEventListener("change", () => {
+          const value = select.value;
+          localStorage.setItem(id, value);
+          const audio = document.getElementById(id.replace("Select", "audio"));
+          if (audio) {
+            audio.src = value;
+            audio.load();
+          }
+        });
+      }
     });
-
-    ["btnResetManual", "btnResetAuto"].forEach(id => {
-      document.getElementById(id).addEventListener("click", () => {
-        if (bleCharacteristic) {
-          const encoder = new TextEncoder();
-          bleCharacteristic.writeValue(encoder.encode("reset"));
-        }
-        updateMeasurement("--.--.--");
-      });
-    });
-
-    updateBLEStatus(false); // 初期表示
   </script>
 </body>
 </html>
