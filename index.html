@@ -292,41 +292,76 @@
         <button onclick="showScreen('settingsMenuScreen')" aria-label="設定メニューに戻る">戻る</button>
       </section>
 
-      <section id="startSettingsScreen" class="screen" aria-label="スタート設定">
-      <h2 style="text-align:center;">ランダムスタート</h2>
-      <div class="setting-card" style="display:flex;flex-direction:column;align-items:center;gap:24px;">
-        
-        <!-- ステップ1 -->
-        <div style="display:flex;align-items:center;gap:12px;">
-          <img src="start1.png" alt="位置について" style="height:48px;">
-          <input type="number" id="minReady" value="2.0" min="0.1" max="10" step="0.1" style="width:80px;">
-          <span>〜</span>
-          <input type="number" id="maxReady" value="4.0" min="0.1" max="10" step="0.1" style="width:80px;">
-          <span>秒</span>
+      <section id="startSettingsScreen" class="screen">
+        <h2 style="text-align:center;">スタート設定</h2>
+
+        <!-- タブ -->
+        <div style="display:flex;justify-content:center;gap:24px;margin-bottom:16px;">
+          <button onclick="showStartTab('fixed')" id="fixedTab" class="active-tab">固定スタート</button>
+          <button onclick="showStartTab('random')" id="randomTab">ランダムスタート</button>
         </div>
 
-        <!-- ステップ2 -->
-        <div style="display:flex;align-items:center;gap:12px;">
-          <img src="start2.png" alt="よーい" style="height:48px;">
-          <input type="number" id="minSet" value="1.5" min="0.1" max="10" step="0.1" style="width:80px;">
-          <span>〜</span>
-          <input type="number" id="maxSet" value="4.0" min="0.1" max="10" step="0.1" style="width:80px;">
-          <span>秒</span>
+        <!-- 固定スタート設定 -->
+        <div id="fixedSettings" class="start-tab">
+          <h3 style="text-align:center;">固定スタート</h3>
+          <div class="setting-card" style="display:flex;flex-direction:column;align-items:center;gap:24px;">
+
+            <!-- 位置について -->
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img src="start1.png" alt="位置について" style="height:48px;">
+              <input type="number" id="fixedReady" value="3.0" min="0.1" max="10" step="0.1" style="width:80px;">
+              <span>秒</span>
+            </div>
+
+            <!-- よーい -->
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img src="start2.png" alt="よーい" style="height:48px;">
+              <input type="number" id="fixedSet" value="2.0" min="0.1" max="10" step="0.1" style="width:80px;">
+              <span>秒</span>
+            </div>
+
+          </div>
+          <button onclick="saveFixedStartSettings()">保存</button>
         </div>
 
-        <!-- ステップ3 -->
-        <div style="display:flex;align-items:center;gap:12px;">
-          <img src="start3.png" alt="スタート" style="height:48px;">
-          <input type="number" id="minGo" value="1.5" min="0.1" max="10" step="0.1" style="width:80px;">
-          <span>〜</span>
-          <input type="number" id="maxGo" value="3.0" min="0.1" max="10" step="0.1" style="width:80px;">
-          <span>秒</span>
+        <!-- ランダムスタート設定 -->
+        <div id="randomSettings" class="start-tab" style="display:none;">
+          <h3 style="text-align:center;">ランダムスタート</h3>
+          <div class="setting-card" style="display:flex;flex-direction:column;align-items:center;gap:24px;">
+
+            <!-- 位置について -->
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img src="start1.png" alt="位置について" style="height:48px;">
+              <input type="number" id="minReady" value="2.0" min="0.1" max="10" step="0.1" style="width:80px;">
+              <span>〜</span>
+              <input type="number" id="maxReady" value="4.0" min="0.1" max="10" step="0.1" style="width:80px;">
+              <span>秒</span>
+            </div>
+
+            <!-- よーい -->
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img src="start2.png" alt="よーい" style="height:48px;">
+              <input type="number" id="minSet" value="1.5" min="0.1" max="10" step="0.1" style="width:80px;">
+              <span>〜</span>
+              <input type="number" id="maxSet" value="4.0" min="0.1" max="10" step="0.1" style="width:80px;">
+              <span>秒</span>
+            </div>
+
+            <!-- スタート -->
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img src="start3.png" alt="スタート" style="height:48px;">
+              <input type="number" id="minGo" value="1.5" min="0.1" max="10" step="0.1" style="width:80px;">
+              <span>〜</span>
+              <input type="number" id="maxGo" value="3.0" min="0.1" max="10" step="0.1" style="width:80px;">
+              <span>秒</span>
+            </div>
+
+          </div>
+          <button onclick="saveRandomStartSettings()">保存</button>
         </div>
 
-      </div>
-      <button onclick="saveRandomStartSettings()">保存</button>
-      <button onclick="showScreen('settingsMenuScreen')">戻る</button>
-  </section>
+        <button onclick="showScreen('settingsMenuScreen')">戻る</button>
+      </section>
 
       <!-- 手動モード -->
       <section id="manualScreen" class="screen" aria-label="手動モード">
@@ -798,7 +833,18 @@ function startSequenceAfterCountdown() {
     localStorage.setItem('maxGo', document.getElementById('maxGo').value);
     alert('ランダムスタート設定を保存しました');
   }
+  function showStartTab(type) {
+    document.getElementById("fixedSettings").style.display = (type === "fixed") ? "block" : "none";
+    document.getElementById("randomSettings").style.display = (type === "random") ? "block" : "none";
+    document.getElementById("fixedTab").classList.toggle("active-tab", type === "fixed");
+    document.getElementById("randomTab").classList.toggle("active-tab", type === "random");
+  }
 
+  function saveFixedStartSettings() {
+    localStorage.setItem("fixedReady", document.getElementById("fixedReady").value);
+    localStorage.setItem("fixedSet", document.getElementById("fixedSet").value);
+    alert("固定スタート設定を保存しました");
+  }
 </script>
 </body>
 </html>
