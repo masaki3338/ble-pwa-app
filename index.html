@@ -177,6 +177,10 @@
           <option value="whistle.mp3">笛</option>
         </select>
       </div>
+      <div class="setting-card">
+        <label for="volumeControl">音声ボリューム</label>
+        <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="1" />
+      </div>
       <button onclick="showScreen('settingsMenuScreen')">戻る</button>
     </div>
 
@@ -353,8 +357,30 @@
       if (audio) {
         audio.src = value;
         audio.load();
+        audio.volume = volumeControl.value;
       }
     });
+  });
+
+  // 音声ボリューム設定
+  const volumeControl = document.getElementById("volumeControl");
+  const savedVolume = localStorage.getItem("audioVolume");
+  volumeControl.value = savedVolume !== null ? savedVolume : 1;
+
+  function setAudioVolume(vol) {
+    document.getElementById("audioReady").volume = vol;
+    document.getElementById("audioSet").volume = vol;
+    document.getElementById("audioGo").volume = vol;
+  }
+
+  // ページ読み込み時に音量反映
+  setAudioVolume(volumeControl.value);
+
+  // 音量スライダー変更時に音量反映と保存
+  volumeControl.addEventListener("input", (e) => {
+    const vol = e.target.value;
+    setAudioVolume(vol);
+    localStorage.setItem("audioVolume", vol);
   });
 
   function loadAutoModeSelection() {
@@ -396,18 +422,12 @@
   // 音声ファイル名から表示文字列を返すマッピング関数
   function getDisplayTextForAudio(audioFileName) {
     switch (audioFileName) {
-      // Ready
       case "Ready.mp3": return "On Your Marks";
       case "Ready-jp.mp3": return "位置について";
-
-      // Set
       case "Set.mp3": return "Set";
       case "Set-jp.mp3": return "よーい";
-
-      // Go (Start)
       case "Go.mp3": return "Start";
       case "whistle.mp3": return "スタート";
-
       default: return "";
     }
   }
@@ -421,14 +441,17 @@
     const audioReady = document.getElementById("audioReady");
     audioReady.src = readySelect;
     audioReady.load();
+    audioReady.volume = volumeControl.value;
 
     const audioSet = document.getElementById("audioSet");
     audioSet.src = setSelect;
     audioSet.load();
+    audioSet.volume = volumeControl.value;
 
     const audioGo = document.getElementById("audioGo");
     audioGo.src = goSelect;
     audioGo.load();
+    audioGo.volume = volumeControl.value;
   }
 
   // 音声操作ボタンイベント（手動モード）
@@ -443,132 +466,115 @@
   document.getElementById("btnStart").addEventListener("click", () => {
     refreshAudioSources();
     document.getElementById("audioGo").play();
-    if (bleCharacteristic) {
-      setTimeout(() => {
-        bleCharacteristic.writeValue(new TextEncoder().encode("start"));
-      }, 500);
-    }
   });
+
+  // 自動モードのカウントダウンシーケンス
+  const countdownEl = document.getElementById("countdown");
+  const measurementAutoEl = document.getElementById("measurementAuto");
+  const sequenceBtn = document.getElementById("sequenceBtn");
+  const btnStopAuto = document.getElementById("btnStopAuto");
+  const btnResetAuto = document.getElementById("btnResetAuto");
+
+  let countdownTimeouts = [];
+
+  function clearCountdown() {
+    countdownTimeouts.forEach(t => clearTimeout(t));
+    countdownTimeouts = [];
+    countdownEl.textContent = "";
+  }
+
+  function runSequence() {
+    clearCountdown();
+    refreshAudioSources();
+
+    const mode = document.querySelector('input[name="autoMode"]:checked')?.value || "fixed";
+    const timeReady = parseFloat(document.getElementById("timeReady").value) || 2;
+    const timeSet = parseFloat(document.getElementById("timeSet").value) || 3;
+    const timeGo = parseFloat(document.getElementById("timeGo").value) || 4;
+
+    let elapsed = 0;
+
+    // 位置について表示＋再生
+    countdownEl.textContent = getDisplayTextForAudio(localStorage.getItem("readySelect") || "Ready.mp3");
+    document.getElementById("audioReady").play();
+
+    countdownTimeouts.push(setTimeout(() => {
+      // よーい表示＋再生
+      countdownEl.textContent = getDisplayTextForAudio(localStorage.getItem("setSelect") || "Set.mp3");
+      document.getElementById("audioSet").play();
+    }, timeReady * 1000));
+
+    countdownTimeouts.push(setTimeout(() => {
+      // スタート音表示＋再生
+      countdownEl.textContent = getDisplayTextForAudio(localStorage.getItem("goSelect") || "Go.mp3");
+
+      // ランダムモードならここでランダム遅延発生
+      if (mode === "random") {
+        const randomDelay = Math.random() * timeGo * 1000;
+        countdownTimeouts.push(setTimeout(() => {
+          document.getElementById("audioGo").play();
+          countdownEl.textContent = "スタート！";
+        }, randomDelay));
+      } else {
+        document.getElementById("audioGo").play();
+      }
+    }, (timeReady + timeSet) * 1000));
+  }
+
+  sequenceBtn.addEventListener("click", () => {
+    runSequence();
+  });
+
+  btnStopAuto.addEventListener("click", () => {
+    clearCountdown();
+    countdownEl.textContent = "";
+  });
+
+  btnResetAuto.addEventListener("click", () => {
+    clearCountdown();
+    countdownEl.textContent = "--.--.--";
+    measurementAutoEl.textContent = "--.--.--";
+  });
+
+  // 手動モードのストップ・リセットボタンはサンプルです
   document.getElementById("btnStopManual").addEventListener("click", () => {
-    if (bleCharacteristic) {
-      bleCharacteristic.writeValue(new TextEncoder().encode("stop"));
-    }
+    // 何かの停止処理
+    alert("手動モード ストップが押されました");
   });
   document.getElementById("btnResetManual").addEventListener("click", () => {
-    if (bleCharacteristic) {
-      bleCharacteristic.writeValue(new TextEncoder().encode("reset"));
-    }
     document.getElementById("measurementManual").textContent = "--.--.--";
   });
 
-  // 自動モード制御
-  document.getElementById("sequenceBtn").addEventListener("click", async () => {
-    await runStartCountdown(); // 🔽 5秒カウントダウンを追加
-
-    const mode = localStorage.getItem("startMode") || "fixed";
-    if (mode === "fixed") {
-      const tReady = parseFloat(localStorage.getItem("timeReady")) || 2.0;
-      const tSet = parseFloat(localStorage.getItem("timeSet")) || 3.0;
-      const tGo = parseFloat(localStorage.getItem("timeGo")) || 4.0;
-      await runFixedSequence([tReady, tSet, tGo]);
-    } else {
-      await runRandomSequence();
-    }
-  });
-
-  document.getElementById("btnStopAuto").addEventListener("click", () => {
-    if (bleCharacteristic) {
-      bleCharacteristic.writeValue(new TextEncoder().encode("stop"));
-    }
-  });
-  document.getElementById("btnResetAuto").addEventListener("click", () => {
-    if (bleCharacteristic) {
-      bleCharacteristic.writeValue(new TextEncoder().encode("reset"));
-    }
-    document.getElementById("measurementAuto").textContent = "--.--.--";
-    document.getElementById("countdown").textContent = "";
-  });
-
-  function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async function runStartCountdown() {
-    const countdown = document.getElementById("countdown");
-    for (let i = 5; i >= 1; i--) {
-      countdown.textContent = i.toString();
-      await delay(1000);
-    }
-  }
-  async function runFixedSequence(times) {
-    refreshAudioSources(); // ← ここで最新音声ファイルに更新
-
-    const countdown = document.getElementById("countdown");
-
-    const readyAudioFile = localStorage.getItem("readySelect") || "Ready.mp3";
-    const setAudioFile = localStorage.getItem("setSelect") || "Set.mp3";
-    const goAudioFile = localStorage.getItem("goSelect") || "Go.mp3";
-
-    await delay(times[0] * 1000);
-    countdown.textContent = getDisplayTextForAudio(readyAudioFile);
-    document.getElementById("audioReady").play();
-
-    await delay(times[1] * 1000);
-    countdown.textContent = getDisplayTextForAudio(setAudioFile);
-    document.getElementById("audioSet").play();
-
-    await delay(times[2] * 1000);
-    countdown.textContent = getDisplayTextForAudio(goAudioFile);
-    document.getElementById("audioGo").play();
-
-    if (bleCharacteristic) {
-      bleCharacteristic.writeValue(new TextEncoder().encode("start"));
-    }
-    await delay(1500);
-    countdown.textContent = "";
-  }
-
-  async function runRandomSequence() {
-    refreshAudioSources(); // ← ここも
-
-    const countdown = document.getElementById("countdown");
-
-    const readyAudioFile = localStorage.getItem("readySelect") || "Ready.mp3";
-    const setAudioFile = localStorage.getItem("setSelect") || "Set.mp3";
-    const goAudioFile = localStorage.getItem("goSelect") || "Go.mp3";
-
-    countdown.textContent = getDisplayTextForAudio(readyAudioFile);
-    document.getElementById("audioReady").play();
-
-    // 3～7秒のランダム待機
-    const randomWait = 3000 + Math.random() * 4000;
-    await delay(randomWait);
-
-    countdown.textContent = getDisplayTextForAudio(setAudioFile);
-    document.getElementById("audioSet").play();
-
-    await delay(1000);
-
-    countdown.textContent = getDisplayTextForAudio(goAudioFile);
-    document.getElementById("audioGo").play();
-
-    if (bleCharacteristic) {
-      bleCharacteristic.writeValue(new TextEncoder().encode("start"));
-    }
-    await delay(1500);
-    countdown.textContent = "";
-  }
-
-  // ページロード時にスタート設定をロード
-  window.addEventListener("load", () => {
-    loadStartSettings();
-    loadAutoModeSelection(); // ← ここを追加
-    updateBleStatus(false);
-  });
-
-  // BLE接続ボタンイベント
+  // BLE接続ボタン
   document.getElementById("connectBtn").addEventListener("click", () => {
     connectBle();
+  });
+
+  // 初期ロード時処理
+  window.addEventListener("load", () => {
+    // 音声設定の復元
+    ["readySelect", "setSelect", "goSelect"].forEach(id => {
+      const v = localStorage.getItem(id);
+      if (v) {
+        const sel = document.getElementById(id);
+        sel.value = v;
+        const audio = document.getElementById(id.replace("Select", "audio"));
+        if (audio) {
+          audio.src = v;
+          audio.load();
+        }
+      }
+    });
+    // 音量設定復元
+    const vol = localStorage.getItem("audioVolume");
+    if (vol !== null) {
+      volumeControl.value = vol;
+      setAudioVolume(vol);
+    }
+
+    loadStartSettings();
+    loadAutoModeSelection();
+    refreshAudioSources();
   });
 </script>
 </body>
