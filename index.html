@@ -639,6 +639,7 @@ function startSequenceAfterCountdown() {
     playAudio('go');
     autoMeasurementDisplay.textContent = 'スタート！';
     sendBle('GO');
+    startStopwatchAuto(); // ⬅️ 計測タイマ開始（自動モード）
   }, (timeReady + timeSet) * 1000));
 
   // カウントダウン表示
@@ -763,6 +764,18 @@ function startSequenceAfterCountdown() {
 
   // 初期設定読み込み
   loadSettings();
+
+  function startStopwatchAuto() {
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const seconds = (elapsed / 1000).toFixed(2).padStart(5, '0');
+      autoMeasurementDisplay.textContent = seconds;
+    }, 50);
+
+    // 停止時に止められるように保存
+    window._autoTimerInterval = timer;
+  }
 
 </script>
 </body>
