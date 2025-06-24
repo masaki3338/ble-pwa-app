@@ -543,16 +543,15 @@ btnStart.addEventListener('click', () => {
   //manualMeasurementDisplay.textContent = 'スタート！';
   sendBle('GO');
 
-  // スタート音が再生し終わったら計測タイマー開始
-  audioGo.onended = () => {
-      manualStartTime = performance.now();
+  // 計測タイマー開始
+    manualStartTime = performance.now();
 
-      manualTimerInterval = setInterval(() => {
-        const elapsedMs = performance.now() - manualStartTime;
-        const elapsedSec = (elapsedMs / 1000).toFixed(2);
-        manualMeasurementDisplay.textContent = elapsedSec;
-      }, 10);
-    };
+    manualTimerInterval = setInterval(() => {
+      const elapsedMs = performance.now() - manualStartTime;
+      const elapsedSec = (elapsedMs / 1000).toFixed(2);
+      manualMeasurementDisplay.textContent = elapsedSec;
+    }, 10);
+
   });
 
   btnStopManual.addEventListener('click', () => {
