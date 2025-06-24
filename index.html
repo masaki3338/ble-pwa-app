@@ -521,12 +521,12 @@
   // 手動モードボタン処理
   btnReady.addEventListener('click', () => {
     playAudio('ready');
-    manualMeasurementDisplay.textContent = '位置について';
+    //manualMeasurementDisplay.textContent = '位置について';
     sendBle('READY');
   });
   btnSet.addEventListener('click', () => {
     playAudio('set');
-    manualMeasurementDisplay.textContent = 'よーい';
+    //manualMeasurementDisplay.textContent = 'よーい';
     sendBle('SET');
   });
 let manualTimerInterval = null;
@@ -540,7 +540,7 @@ btnStart.addEventListener('click', () => {
   }
 
   playAudio('go');
-  manualMeasurementDisplay.textContent = 'スタート！';
+  //manualMeasurementDisplay.textContent = 'スタート！';
   sendBle('GO');
 
   // スタート音が再生し終わったら計測タイマー開始
@@ -556,7 +556,7 @@ btnStart.addEventListener('click', () => {
   });
 
   btnStopManual.addEventListener('click', () => {
-    manualMeasurementDisplay.textContent = 'ストップ';
+    //manualMeasurementDisplay.textContent = 'ストップ';
     sendBle('STOP');
     if (manualTimerInterval) {
       clearInterval(manualTimerInterval);
