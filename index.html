@@ -1,581 +1,740 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BLE UI</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
-      background: #f0f0f0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .app-container {
-      width: 100%;
-      max-width: 400px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      padding: 20px;
-      box-sizing: border-box;
-      position: relative;
-    }
-    .screen {
-      display: none;
-      flex-direction: column;
-      gap: 15px;
-    }
-    .screen.active {
-      display: flex;
-    }
-    button {
-      padding: 15px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #countdown {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 80px;
-      font-weight: bold;
-      color: red;
-      text-align: center;
-      z-index: 1000;
-      min-height: 1.5em;
-    }
-    #measurementManual, #measurementAuto {
-      font-weight: bold;
-      font-size: 48px;
-      margin-top: 8px;
-      color: #222;
-      min-height: 1.5em;
-      user-select: none;
-    }
-    .extra-controls {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .setting-card {
-      background: #fafafa;
-      padding: 14px 18px;
-      border-radius: 14px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
-      margin-bottom: 10px;
-    }
-    .setting-card label {
-      font-size: 15px;
-      color: #444;
-      margin-bottom: 6px;
-      font-weight: 500;
-      display: block;
-    }
-    .setting-card select,
-    .setting-card input[type=number] {
-      font-size: 17px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      background-color: #fff;
-      appearance: none;
-      outline-offset: 2px;
-      cursor: pointer;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    #bleStatus {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #999;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 20px;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      z-index: 9999;
-      user-select: none;
-    }
-    #bleIcon {
-      font-size: 18px;
-    }
-    .radio-group {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 10px;
-    }
-    .radio-group label {
-      cursor: pointer;
-      user-select: none;
-      font-weight: 600;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Stopwatch BLE App</title>
+<style>
+  /* Reset */
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1E3C72 0%, #2A5298 100%);
+    color: #f0f0f0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 10px 40px;
+  }
+  .app-container {
+    background: #152f5c;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: #0d2249;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    position: relative;
+  }
+  header svg {
+    width: 38px;
+    height: 38px;
+    fill: #58a6ff;
+  }
+  header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 1.3px;
+    color: #58a6ff;
+    user-select: none;
+    flex-grow: 1;
+  }
+  #bleStatus {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: #304a7e88;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    color: #d0e6ff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.5);
+    user-select: none;
+    z-index: 1000;
+  }
+  #bleIcon {
+    font-size: 18px;
+  }
+
+  main {
+    padding: 24px 20px 32px;
+    flex-grow: 1;
+  }
+
+  .screen {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .screen.active {
+    display: flex;
+  }
+
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #bbe1ff;
+    user-select: none;
+  }
+
+  button {
+    background: #2f64d6;
+    border: none;
+    border-radius: 14px;
+    color: #f0f9ff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 16px;
+    cursor: pointer;
+    box-shadow: 0 6px 12px #1a3a74cc;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+    text-align: center;
+  }
+  button:hover,
+  button:focus {
+    background: #5089ff;
+    box-shadow: 0 8px 20px #2a65e6cc;
+    outline: none;
+  }
+  button:active {
+    background: #1d3f98;
+    box-shadow: 0 4px 8px #173071cc;
+  }
+
+  #countdown {
+    font-size: 4.5rem;
+    font-weight: 800;
+    color: #ffcc00;
+    text-align: center;
+    text-shadow: 0 0 12px #ffcc0088;
+    user-select: none;
+    min-height: 2.5em;
+  }
+
+  #measurementManual,
+  #measurementAuto {
+    font-weight: 700;
+    font-size: 3rem;
+    color: #dce9ff;
+    text-align: center;
+    text-shadow: 0 0 8px #78a7ffbb;
+    user-select: none;
+    min-height: 2em;
+  }
+
+  .extra-controls {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  /* 設定カード */
+  .setting-card {
+    background: #254a90;
+    padding: 16px 20px;
+    border-radius: 18px;
+    box-shadow: inset 0 0 15px #1a3872;
+  }
+  .setting-card label {
+    display: block;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: #aad4ff;
+  }
+  select,
+  input[type=number],
+  input[type=range] {
+    width: 100%;
+    border-radius: 14px;
+    border: none;
+    padding: 14px 18px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #0d2249;
+    background: #a3c2ff;
+    box-shadow: inset 0 3px 6px #7099ff;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* ラジオボタン */
+  .radio-group {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+  }
+  .radio-group label {
+    cursor: pointer;
+    user-select: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #bbe1ff;
+  }
+  .radio-group input[type="radio"] {
+    accent-color: #58a6ff;
+    margin-right: 6px;
+    cursor: pointer;
+  }
+
+  /* 音量スライダーのカスタムスタイル */
+  input[type=range] {
+    -webkit-appearance: none;
+    height: 8px;
+    background: #5280ff;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    background: #ffe066;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid #ffaa00;
+    box-shadow: 0 0 8px #ffaa0077;
+    margin-top: -10px;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    background: #ffe066;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid #ffaa00;
+    box-shadow: 0 0 8px #ffaa0077;
+  }
+</style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- BLEステータス表示 -->
-    <div id="bleStatus">
-      <span id="bleIcon">🔴</span>
-      <span id="bleText">未接続</span>
-    </div>
+  <div class="app-container" role="main" aria-label="ストップウォッチBLEアプリ">
 
-    <!-- メニュー画面 -->
-    <div id="menuScreen" class="screen active">
-      <h2>メニュー</h2>
-      <button id="connectBtn">BLE接続</button>
-      <button onclick="showScreen('manualScreen')">手動モード</button>
-      <button onclick="showScreen('autoScreen')">自動モード</button>
-      <button onclick="showScreen('settingsMenuScreen')">設定</button>
-    </div>
+    <header>
+      <!-- SVGアイコン（ランニング人のシルエット） -->
+      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" >
+        <circle cx="32" cy="16" r="8" />
+        <path d="M44 44c0-4-10-12-14-10s-8 10-6 12 18 0 20-2-2-6-0-8z" />
+        <line x1="32" y1="24" x2="32" y2="40" stroke="#58a6ff" stroke-width="4" />
+      </svg>
+      <h1>Stopwatch BLE</h1>
+      <div id="bleStatus" aria-live="polite">
+        <span id="bleIcon" aria-hidden="true">🔴</span>
+        <span id="bleText">未接続</span>
+      </div>
+    </header>
 
-    <!-- 設定メニュー -->
-    <div id="settingsMenuScreen" class="screen">
-      <h2>設定メニュー</h2>
-      <button onclick="showScreen('settingsScreen')">音声設定</button>
-      <button onclick="showScreen('startSettingsScreen')">スタート設定</button>
-      <button onclick="showScreen('menuScreen')">戻る</button>
-    </div>
+    <main>
+      <!-- メニュー画面 -->
+      <section id="menuScreen" class="screen active" aria-label="メニュー画面">
+        <button id="connectBtn" aria-label="BLE接続開始">BLE接続</button>
+        <button onclick="showScreen('manualScreen')" aria-label="手動モードへ">手動モード</button>
+        <button onclick="showScreen('autoScreen')" aria-label="自動モードへ">自動モード</button>
+        <button onclick="showScreen('settingsMenuScreen')" aria-label="設定メニューへ">設定</button>
+      </section>
 
-    <!-- 音声設定 -->
-    <div id="settingsScreen" class="screen">
-      <h2>音声設定</h2>
-      <div class="setting-card">
-        <label for="readySelect">Ready</label>
-        <select id="readySelect">
-          <option value="Ready.mp3">On Your Marks</option>
-          <option value="Ready-jp.mp3">位置について</option>
-        </select>
-      </div>
-      <div class="setting-card">
-        <label for="setSelect">Set</label>
-        <select id="setSelect">
-          <option value="Set.mp3">Set</option>
-          <option value="Set-jp.mp3">よーい</option>
-        </select>
-      </div>
-      <div class="setting-card">
-        <label for="goSelect">スタート音</label>
-        <select id="goSelect">
-          <option value="Go.mp3">ピストル</option>
-          <option value="whistle.mp3">笛</option>
-        </select>
-      </div>
-      <div class="setting-card">
-        <label for="volumeControl">音声ボリューム</label>
-        <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="1" />
-      </div>
-      <button onclick="showScreen('settingsMenuScreen')">戻る</button>
-    </div>
+      <!-- 設定メニュー -->
+      <section id="settingsMenuScreen" class="screen" aria-label="設定メニュー">
+        <button onclick="showScreen('settingsScreen')">音声設定</button>
+        <button onclick="showScreen('startSettingsScreen')">スタート設定</button>
+        <button onclick="showScreen('menuScreen')">戻る</button>
+      </section>
 
-    <!-- スタート設定 -->
-    <div id="startSettingsScreen" class="screen">
-      <h2>スタート設定</h2>
-      <div class="setting-card">
-        <div class="radio-group">
-          <label><input type="radio" name="startMode" value="fixed" /> 固定</label>
-          <label><input type="radio" name="startMode" value="random" /> ランダム</label>
+      <!-- 音声設定 -->
+      <section id="settingsScreen" class="screen" aria-label="音声設定">
+        <div class="setting-card">
+          <label for="readySelect">Ready</label>
+          <select id="readySelect" aria-describedby="readySelectHelp">
+            <option value="Ready.mp3">On Your Marks</option>
+            <option value="Ready-jp.mp3">位置について</option>
+          </select>
+          <small id="readySelectHelp" style="color:#a8c5ff;">スタート準備音声を選択</small>
         </div>
-      </div>
-      <div class="setting-card">
-        <label for="timeReady">位置について までの時間（秒）</label>
-        <input type="number" id="timeReady" min="1" max="10" step="0.1" value="2.0" />
-      </div>
-      <div class="setting-card">
-        <label for="timeSet">よーい までの時間（秒）</label>
-        <input type="number" id="timeSet" min="1" max="10" step="0.1" value="3.0" />
-      </div>
-      <div class="setting-card">
-        <label for="timeGo">スタート までの時間（秒）</label>
-        <input type="number" id="timeGo" min="1" max="10" step="0.1" value="4.0" />
-      </div>
-      <button onclick="saveStartSettings()">保存</button>
-      <button onclick="showScreen('settingsMenuScreen')">戻る</button>
-    </div>
-
-    <!-- 手動モード -->
-    <div id="manualScreen" class="screen">
-      <h2>手動モード</h2>
-      <div id="measurementManual">--.--.--</div>
-      <button id="btnReady">位置について</button>
-      <button id="btnSet">よーい</button>
-      <button id="btnStart">スタート</button>
-      <div class="extra-controls">
-        <button id="btnStopManual">ストップ</button>
-        <button id="btnResetManual">リセット</button>
-      </div>
-      <button onclick="showScreen('menuScreen')">戻る</button>
-    </div>
-
-    <!-- 自動モード -->
-    <div id="autoScreen" class="screen">
-      <h2>自動モード</h2>
-      <div class="setting-card">
-        <div class="radio-group" id="autoModeRadioGroup">
-          <label><input type="radio" name="autoMode" value="fixed" /> 固定</label>
-          <label><input type="radio" name="autoMode" value="random" /> ランダム</label>
+        <div class="setting-card">
+          <label for="setSelect">Set</label>
+          <select id="setSelect" aria-describedby="setSelectHelp">
+            <option value="Set.mp3">Set</option>
+            <option value="Set-jp.mp3">よーい</option>
+          </select>
+          <small id="setSelectHelp" style="color:#a8c5ff;">スタート直前の音声を選択</small>
         </div>
-      </div>
-      <div id="countdown"></div>
-      <div id="measurementAuto">--.--.--</div>
-      <button id="sequenceBtn">シーケンス開始</button>
-      <div class="extra-controls">
-        <button id="btnStopAuto">ストップ</button>
-        <button id="btnResetAuto">リセット</button>
-      </div>
-      <button onclick="showScreen('menuScreen')">戻る</button>
-    </div>
+        <div class="setting-card">
+          <label for="goSelect">スタート音</label>
+          <select id="goSelect" aria-describedby="goSelectHelp">
+            <option value="Go.mp3">ピストル</option>
+            <option value="whistle.mp3">笛</option>
+          </select>
+          <small id="goSelectHelp" style="color:#a8c5ff;">スタート合図の音声を選択</small>
+        </div>
+        <div class="setting-card">
+          <label for="volumeControl">音声ボリューム</label>
+          <input type="range" id="volumeControl" min="0" max="1" step="0.01" aria-valuemin="0" aria-valuemax="1" aria-valuenow="1" aria-label="音声ボリューム調整" />
+        </div>
+        <button onclick="showScreen('settingsMenuScreen')" aria-label="設定メニューに戻る">戻る</button>
+      </section>
+
+      <!-- スタート設定 -->
+      <section id="startSettingsScreen" class="screen" aria-label="スタート設定">
+        <div class="setting-card">
+          <div class="radio-group" role="radiogroup" aria-label="スタートモード選択">
+            <label><input type="radio" name="startMode" value="fixed" /> 固定</label>
+            <label><input type="radio" name="startMode" value="random" /> ランダム</label>
+          </div>
+        </div>
+        <div class="setting-card">
+          <label for="timeReady">位置について までの時間（秒）</label>
+          <input type="number" id="timeReady" min="1" max="10" step="0.1" />
+        </div>
+        <div class="setting-card">
+          <label for="timeSet">よーい までの時間（秒）</label>
+          <input type="number" id="timeSet" min="1" max="10" step="0.1" />
+        </div>
+        <div class="setting-card">
+          <label for="timeGo">スタート までの時間（秒）</label>
+          <input type="number" id="timeGo" min="1" max="10" step="0.1" />
+        </div>
+        <button onclick="saveStartSettings()">保存</button>
+        <button onclick="showScreen('settingsMenuScreen')">戻る</button>
+      </section>
+
+      <!-- 手動モード -->
+      <section id="manualScreen" class="screen" aria-label="手動モード">
+        <div id="measurementManual" aria-live="polite" aria-atomic="true">--.--.--</div>
+        <button id="btnReady">位置について</button>
+        <button id="btnSet">よーい</button>
+        <button id="btnStart">スタート</button>
+        <div class="extra-controls">
+          <button id="btnStopManual">ストップ</button>
+          <button id="btnResetManual">リセット</button>
+        </div>
+        <button onclick="showScreen('menuScreen')">戻る</button>
+      </section>
+
+      <!-- 自動モード -->
+      <section id="autoScreen" class="screen" aria-label="自動モード">
+        <div class="setting-card">
+          <div class="radio-group" id="autoModeRadioGroup" role="radiogroup" aria-label="自動モード選択">
+            <label><input type="radio" name="autoMode" value="fixed" /> 固定</label>
+            <label><input type="radio" name="autoMode" value="random" /> ランダム</label>
+          </div>
+        </div>
+        <div id="countdown" aria-live="polite" aria-atomic="true"></div>
+        <div id="measurementAuto" aria-live="polite" aria-atomic="true">--.--.--</div>
+        <button id="sequenceBtn">シーケンス開始</button>
+        <div class="extra-controls">
+          <button id="btnStopAuto">ストップ</button>
+          <button id="btnResetAuto">リセット</button>
+        </div>
+        <button onclick="showScreen('menuScreen')">戻る</button>
+      </section>
+    </main>
+
   </div>
 
   <!-- Audio Elements -->
-  <audio id="audioReady" src="Ready.mp3"></audio>
-  <audio id="audioSet" src="Set.mp3"></audio>
-  <audio id="audioGo" src="Go.mp3"></audio>
+  <audio id="audioReady" src="Ready.mp3" preload="auto"></audio>
+  <audio id="audioSet" src="Set.mp3" preload="auto"></audio>
+  <audio id="audioGo" src="Go.mp3" preload="auto"></audio>
 
 <script>
+  // --- 共通変数 ---
   let bleDevice = null;
+  let bleServer = null;
   let bleCharacteristic = null;
-  let reconnectAttempts = 0;
-  const maxReconnectAttempts = 5;
 
-  // 画面切り替え
-  function showScreen(screenId) {
-    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-    document.getElementById(screenId).classList.add("active");
-  }
+  // BLEサービス・キャラクタリスティックUUID（例）
+  const SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+  const CHARACTERISTIC_UUID = '0000ffe1-0000-1000-8000-00805f9b34fb';
 
-  // BLE状態表示更新
+  // 音声プレイヤー
+  const audioReady = document.getElementById('audioReady');
+  const audioSet = document.getElementById('audioSet');
+  const audioGo = document.getElementById('audioGo');
+
+  // UI要素
+  const bleStatus = document.getElementById('bleStatus');
+  const bleIcon = document.getElementById('bleIcon');
+  const bleText = document.getElementById('bleText');
+  const connectBtn = document.getElementById('connectBtn');
+
+  const manualMeasurementDisplay = document.getElementById('measurementManual');
+  const autoMeasurementDisplay = document.getElementById('measurementAuto');
+  const countdownDisplay = document.getElementById('countdown');
+
+  // 設定要素
+  const readySelect = document.getElementById('readySelect');
+  const setSelect = document.getElementById('setSelect');
+  const goSelect = document.getElementById('goSelect');
+  const volumeControl = document.getElementById('volumeControl');
+
+  const timeReadyInput = document.getElementById('timeReady');
+  const timeSetInput = document.getElementById('timeSet');
+  const timeGoInput = document.getElementById('timeGo');
+
+  // 自動モードラジオ
+  const autoModeRadios = document.getElementsByName('autoMode');
+  const startModeRadios = document.getElementsByName('startMode');
+
+  // 手動モードボタン
+  const btnReady = document.getElementById('btnReady');
+  const btnSet = document.getElementById('btnSet');
+  const btnStart = document.getElementById('btnStart');
+  const btnStopManual = document.getElementById('btnStopManual');
+  const btnResetManual = document.getElementById('btnResetManual');
+
+  // 自動モードボタン
+  const sequenceBtn = document.getElementById('sequenceBtn');
+  const btnStopAuto = document.getElementById('btnStopAuto');
+  const btnResetAuto = document.getElementById('btnResetAuto');
+
+  // 状態変数
+  let measurementManual = null;
+  let measurementAuto = null;
+  let countdownTimerId = null;
+  let countdownValue = 0;
+
+  // 音声ボリューム初期値
+  let audioVolume = 1.0;
+
+  // BLE 接続状態更新
   function updateBleStatus(connected) {
-    const icon = document.getElementById("bleIcon");
-    const text = document.getElementById("bleText");
-    const container = document.getElementById("bleStatus");
     if (connected) {
-      icon.textContent = "🟢";
-      text.textContent = "接続済み";
-      container.style.background = "#28a745";
+      bleIcon.textContent = '🟢';
+      bleText.textContent = '接続済み';
+      connectBtn.textContent = '切断';
     } else {
-      icon.textContent = "🔴";
-      text.textContent = "未接続";
-      container.style.background = "#dc3545";
+      bleIcon.textContent = '🔴';
+      bleText.textContent = '未接続';
+      connectBtn.textContent = 'BLE接続';
     }
   }
 
+  // BLE接続処理
   async function connectBle() {
     try {
+      if (bleDevice && bleDevice.gatt.connected) {
+        // 切断
+        await bleDevice.gatt.disconnect();
+        updateBleStatus(false);
+        return;
+      }
+
       bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
-        optionalServices: ["12345678-1234-1234-1234-1234567890ab"]
+        filters: [{ services: [SERVICE_UUID] }],
       });
 
-      bleDevice.addEventListener("gattserverdisconnected", handleDisconnection);
+      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
-      const server = await bleDevice.gatt.connect();
-      const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
-      bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
-      await bleCharacteristic.startNotifications();
-      bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+      bleServer = await bleDevice.gatt.connect();
+      const service = await bleServer.getPrimaryService(SERVICE_UUID);
+      bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
       updateBleStatus(true);
-      reconnectAttempts = 0;
-      alert("接続成功");
-    } catch (err) {
+
+      // 必要なら通知設定
+      await bleCharacteristic.startNotifications();
+      bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
+
+    } catch (error) {
+      console.error('BLE接続失敗:', error);
+      alert('BLE接続に失敗しました: ' + error.message);
       updateBleStatus(false);
-      alert("接続失敗：" + err);
     }
   }
 
-  async function handleDisconnection() {
+  // BLE切断時処理
+  function onDisconnected() {
+    console.log('BLE切断されました');
     updateBleStatus(false);
-    alert("BLE接続が切れました。自動再接続を試みます。");
-    await tryReconnect();
   }
 
-  async function tryReconnect() {
-    if (reconnectAttempts >= maxReconnectAttempts) {
-      alert("最大再接続回数に達しました。再接続を停止します。");
-      return;
-    }
-    reconnectAttempts++;
-    try {
-      const server = await bleDevice.gatt.connect();
-      const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
-      bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
-      await bleCharacteristic.startNotifications();
-      bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
-      updateBleStatus(true);
-      alert("再接続成功");
-      reconnectAttempts = 0;
-    } catch (err) {
-      updateBleStatus(false);
-      console.log("再接続失敗：" + err);
-      setTimeout(tryReconnect, 2000);
-    }
-  }
-
-  function handleNotifications(event) {
+  // BLEからのデータ受信処理
+  function handleBleData(event) {
     const value = event.target.value;
-    const decoder = new TextDecoder('utf-8');
-    const receivedText = decoder.decode(value);
-    if (document.getElementById("manualScreen").classList.contains("active")) {
-      document.getElementById("measurementManual").textContent = receivedText;
-    } else if (document.getElementById("autoScreen").classList.contains("active")) {
-      document.getElementById("measurementAuto").textContent = receivedText;
+    // 受信バイトを文字列に変換（例）
+    let receivedText = '';
+    for (let i = 0; i < value.byteLength; i++) {
+      receivedText += String.fromCharCode(value.getUint8(i));
+    }
+    // 例: 受信した文字列を手動・自動モード表示に反映
+    if (document.getElementById('manualScreen').classList.contains('active')) {
+      manualMeasurementDisplay.textContent = receivedText;
+    }
+    if (document.getElementById('autoScreen').classList.contains('active')) {
+      autoMeasurementDisplay.textContent = receivedText;
     }
   }
 
-  // 音声設定の更新と保存
-  ["readySelect", "setSelect", "goSelect"].forEach(id => {
-    const select = document.getElementById(id);
-    const stored = localStorage.getItem(id);
-    if (stored) {
-      select.value = stored;
-      const audio = document.getElementById(id.replace("Select", "audio"));
-      if (audio) {
-        audio.src = stored;
-        audio.load();
-      }
+  // 画面切替関数
+  function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  }
+
+  // 音声再生関数（選択された音声ファイル名からセット）
+  function playAudio(type) {
+    let audioElem;
+    let filename;
+    switch(type) {
+      case 'ready':
+        filename = readySelect.value;
+        audioElem = audioReady;
+        break;
+      case 'set':
+        filename = setSelect.value;
+        audioElem = audioSet;
+        break;
+      case 'go':
+        filename = goSelect.value;
+        audioElem = audioGo;
+        break;
+      default:
+        return;
     }
-    select.addEventListener("change", () => {
-      const value = select.value;
-      localStorage.setItem(id, value);
-      const audio = document.getElementById(id.replace("Select", "audio"));
-      if (audio) {
-        audio.src = value;
-        audio.load();
-        audio.volume = volumeControl.value;
-      }
-    });
-  });
-
-  // 音声ボリューム設定
-  const volumeControl = document.getElementById("volumeControl");
-  const savedVolume = localStorage.getItem("audioVolume");
-  volumeControl.value = savedVolume !== null ? savedVolume : 1;
-
-  function setAudioVolume(vol) {
-    document.getElementById("audioReady").volume = vol;
-    document.getElementById("audioSet").volume = vol;
-    document.getElementById("audioGo").volume = vol;
-  }
-
-  // ページ読み込み時に音量反映
-  setAudioVolume(volumeControl.value);
-
-  // 音量スライダー変更時に音量反映と保存
-  volumeControl.addEventListener("input", (e) => {
-    const vol = e.target.value;
-    setAudioVolume(vol);
-    localStorage.setItem("audioVolume", vol);
-  });
-
-  function loadAutoModeSelection() {
-    const mode = localStorage.getItem("startMode") || "fixed";
-    const radios = document.querySelectorAll('input[name="autoMode"]');
-    radios.forEach(radio => {
-      radio.checked = (radio.value === mode);
-      radio.addEventListener("change", () => {
-        localStorage.setItem("startMode", radio.value);
-      });
-    });
-  }
-
-  // スタート設定の読み込み・保存
-  function loadStartSettings() {
-    const mode = localStorage.getItem("startMode") || "fixed";
-    document.querySelector(`input[name="startMode"][value="${mode}"]`).checked = true;
-
-    ["timeReady", "timeSet", "timeGo"].forEach(id => {
-      const v = localStorage.getItem(id);
-      if (v) document.getElementById(id).value = v;
-    });
-  }
-
-  function saveStartSettings() {
-    const mode = document.querySelector('input[name="startMode"]:checked').value;
-    localStorage.setItem("startMode", mode);
-
-    ["timeReady", "timeSet", "timeGo"].forEach(id => {
-      let v = parseFloat(document.getElementById(id).value);
-      if (isNaN(v) || v < 0.1) v = 1;
-      else if (v > 10) v = 10;
-      document.getElementById(id).value = v;
-      localStorage.setItem(id, v);
-    });
-    alert("スタート設定を保存しました");
-  }
-
-  // 音声ファイル名から表示文字列を返すマッピング関数
-  function getDisplayTextForAudio(audioFileName) {
-    switch (audioFileName) {
-      case "Ready.mp3": return "On Your Marks";
-      case "Ready-jp.mp3": return "位置について";
-      case "Set.mp3": return "Set";
-      case "Set-jp.mp3": return "よーい";
-      case "Go.mp3": return "Start";
-      case "whistle.mp3": return "スタート";
-      default: return "";
+    if (audioElem.src.indexOf(filename) === -1) {
+      audioElem.src = filename;
     }
+    audioElem.volume = audioVolume;
+    audioElem.currentTime = 0;
+    audioElem.play();
   }
 
-  // 最新の音声設定を <audio> 要素に反映する
-  function refreshAudioSources() {
-    const readySelect = localStorage.getItem("readySelect") || "Ready.mp3";
-    const setSelect = localStorage.getItem("setSelect") || "Set.mp3";
-    const goSelect = localStorage.getItem("goSelect") || "Go.mp3";
-
-    const audioReady = document.getElementById("audioReady");
-    audioReady.src = readySelect;
-    audioReady.load();
-    audioReady.volume = volumeControl.value;
-
-    const audioSet = document.getElementById("audioSet");
-    audioSet.src = setSelect;
-    audioSet.load();
-    audioSet.volume = volumeControl.value;
-
-    const audioGo = document.getElementById("audioGo");
-    audioGo.src = goSelect;
-    audioGo.load();
-    audioGo.volume = volumeControl.value;
-  }
-
-  // 音声操作ボタンイベント（手動モード）
-  document.getElementById("btnReady").addEventListener("click", () => {
-    refreshAudioSources();
-    document.getElementById("audioReady").play();
+  // 手動モードボタン処理
+  btnReady.addEventListener('click', () => {
+    playAudio('ready');
+    manualMeasurementDisplay.textContent = '位置について';
+    sendBle('READY');
   });
-  document.getElementById("btnSet").addEventListener("click", () => {
-    refreshAudioSources();
-    document.getElementById("audioSet").play();
+  btnSet.addEventListener('click', () => {
+    playAudio('set');
+    manualMeasurementDisplay.textContent = 'よーい';
+    sendBle('SET');
   });
-  document.getElementById("btnStart").addEventListener("click", () => {
-    refreshAudioSources();
-    document.getElementById("audioGo").play();
+  btnStart.addEventListener('click', () => {
+    playAudio('go');
+    manualMeasurementDisplay.textContent = 'スタート！';
+    sendBle('GO');
+  });
+  btnStopManual.addEventListener('click', () => {
+    manualMeasurementDisplay.textContent = 'ストップ';
+    sendBle('STOP');
+  });
+  btnResetManual.addEventListener('click', () => {
+    manualMeasurementDisplay.textContent = '--.--.--';
+    sendBle('RESET');
   });
 
-  // 自動モードのカウントダウンシーケンス
-  const countdownEl = document.getElementById("countdown");
-  const measurementAutoEl = document.getElementById("measurementAuto");
-  const sequenceBtn = document.getElementById("sequenceBtn");
-  const btnStopAuto = document.getElementById("btnStopAuto");
-  const btnResetAuto = document.getElementById("btnResetAuto");
+  // 自動モード
+  let autoSequenceRunning = false;
+  let autoTimers = [];
 
-  let countdownTimeouts = [];
+  sequenceBtn.addEventListener('click', () => {
+    if (autoSequenceRunning) return;
+    startAutoSequence();
+  });
+  btnStopAuto.addEventListener('click', stopAutoSequence);
+  btnResetAuto.addEventListener('click', () => {
+    stopAutoSequence();
+    autoMeasurementDisplay.textContent = '--.--.--';
+    countdownDisplay.textContent = '';
+  });
 
-  function clearCountdown() {
-    countdownTimeouts.forEach(t => clearTimeout(t));
-    countdownTimeouts = [];
-    countdownEl.textContent = "";
-  }
+  // 自動シーケンス開始
+  function startAutoSequence() {
+    autoSequenceRunning = true;
+    countdownDisplay.textContent = '';
+    autoMeasurementDisplay.textContent = '--.--.--';
 
-  function runSequence() {
-    clearCountdown();
-    refreshAudioSources();
+    // スタート設定値取得（秒）
+    let timeReady = parseFloat(timeReadyInput.value) || 3.0;
+    let timeSet = parseFloat(timeSetInput.value) || 2.0;
+    let timeGo = parseFloat(timeGoInput.value) || 1.0;
 
-    const mode = document.querySelector('input[name="autoMode"]:checked')?.value || "fixed";
-    const timeReady = parseFloat(document.getElementById("timeReady").value) || 2;
-    const timeSet = parseFloat(document.getElementById("timeSet").value) || 3;
-    const timeGo = parseFloat(document.getElementById("timeGo").value) || 4;
+    // 選択モード取得
+    const autoMode = [...autoModeRadios].find(r => r.checked)?.value || 'fixed';
 
+    // ランダムモードならtimeGoをランダム化
+    if (autoMode === 'random') {
+      timeGo = 1 + Math.random() * 3; // 1〜4秒ランダム
+    }
+
+    // カウントダウン合計
+    let totalSeconds = timeReady + timeSet + timeGo;
+    countdownValue = totalSeconds;
+
+    // 1秒刻みカウントダウン（100ms精度で更新）
+    clearAutoTimers();
+
+    // タイマー間隔
+    const intervalMs = 100;
+
+    // 現在経過時間（秒）
     let elapsed = 0;
 
-    // 位置について表示＋再生
-    countdownEl.textContent = getDisplayTextForAudio(localStorage.getItem("readySelect") || "Ready.mp3");
-    document.getElementById("audioReady").play();
+    // イベントスケジューリング
+    // 位置について 音声再生
+    autoTimers.push(setTimeout(() => {
+      playAudio('ready');
+      autoMeasurementDisplay.textContent = '位置について';
+      sendBle('READY');
+    }, 0));
 
-    countdownTimeouts.push(setTimeout(() => {
-      // よーい表示＋再生
-      countdownEl.textContent = getDisplayTextForAudio(localStorage.getItem("setSelect") || "Set.mp3");
-      document.getElementById("audioSet").play();
+    // よーい 音声再生
+    autoTimers.push(setTimeout(() => {
+      playAudio('set');
+      autoMeasurementDisplay.textContent = 'よーい';
+      sendBle('SET');
     }, timeReady * 1000));
 
-    countdownTimeouts.push(setTimeout(() => {
-      // スタート音表示＋再生
-      countdownEl.textContent = getDisplayTextForAudio(localStorage.getItem("goSelect") || "Go.mp3");
-
-      // ランダムモードならここでランダム遅延発生
-      if (mode === "random") {
-        const randomDelay = Math.random() * timeGo * 1000;
-        countdownTimeouts.push(setTimeout(() => {
-          document.getElementById("audioGo").play();
-          countdownEl.textContent = "スタート！";
-        }, randomDelay));
-      } else {
-        document.getElementById("audioGo").play();
-      }
+    // スタート 音声再生
+    autoTimers.push(setTimeout(() => {
+      playAudio('go');
+      autoMeasurementDisplay.textContent = 'スタート！';
+      sendBle('GO');
     }, (timeReady + timeSet) * 1000));
+
+    // カウントダウン表示用のインターバル
+    autoTimers.push(setInterval(() => {
+      countdownValue -= intervalMs / 1000;
+      if (countdownValue < 0) countdownValue = 0;
+      countdownDisplay.textContent = countdownValue.toFixed(2);
+
+      if (countdownValue <= 0) {
+        clearAutoTimers();
+        autoSequenceRunning = false;
+      }
+    }, intervalMs));
   }
 
-  sequenceBtn.addEventListener("click", () => {
-    runSequence();
-  });
+  // タイマークリア
+  function clearAutoTimers() {
+    autoTimers.forEach(id => clearTimeout(id));
+    autoTimers = [];
+  }
 
-  btnStopAuto.addEventListener("click", () => {
-    clearCountdown();
-    countdownEl.textContent = "";
-  });
+  // 自動シーケンス停止
+  function stopAutoSequence() {
+    clearAutoTimers();
+    autoSequenceRunning = false;
+    countdownDisplay.textContent = '';
+  }
 
-  btnResetAuto.addEventListener("click", () => {
-    clearCountdown();
-    countdownEl.textContent = "--.--.--";
-    measurementAutoEl.textContent = "--.--.--";
-  });
+  // BLE送信（文字列）
+  async function sendBle(message) {
+    if (!bleCharacteristic) {
+      console.warn('BLE未接続またはCharacteristic未取得');
+      return;
+    }
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(message);
+      await bleCharacteristic.writeValue(data);
+    } catch (error) {
+      console.error('BLE送信エラー:', error);
+    }
+  }
 
-  // 手動モードのストップ・リセットボタンはサンプルです
-  document.getElementById("btnStopManual").addEventListener("click", () => {
-    // 何かの停止処理
-    alert("手動モード ストップが押されました");
-  });
-  document.getElementById("btnResetManual").addEventListener("click", () => {
-    document.getElementById("measurementManual").textContent = "--.--.--";
+  // 音声設定保存＆反映
+  function loadSettings() {
+    const savedVolume = localStorage.getItem('audioVolume');
+    if (savedVolume !== null) {
+      audioVolume = parseFloat(savedVolume);
+      volumeControl.value = audioVolume;
+    } else {
+      volumeControl.value = 1.0;
+      audioVolume = 1.0;
+    }
+
+    const savedReady = localStorage.getItem('readySelect');
+    if (savedReady) readySelect.value = savedReady;
+    const savedSet = localStorage.getItem('setSelect');
+    if (savedSet) setSelect.value = savedSet;
+    const savedGo = localStorage.getItem('goSelect');
+    if (savedGo) goSelect.value = savedGo;
+
+    const savedStartMode = localStorage.getItem('startMode');
+    if (savedStartMode) {
+      [...startModeRadios].forEach(r => r.checked = (r.value === savedStartMode));
+    } else {
+      startModeRadios[0].checked = true;
+    }
+
+    const savedAutoMode = localStorage.getItem('autoMode');
+    if (savedAutoMode) {
+      [...autoModeRadios].forEach(r => r.checked = (r.value === savedAutoMode));
+    } else {
+      autoModeRadios[0].checked = true;
+    }
+
+    const savedTimeReady = localStorage.getItem('timeReady');
+    if (savedTimeReady) timeReadyInput.value = savedTimeReady;
+    else timeReadyInput.value = 3.0;
+
+    const savedTimeSet = localStorage.getItem('timeSet');
+    if (savedTimeSet) timeSetInput.value = savedTimeSet;
+    else timeSetInput.value = 2.0;
+
+    const savedTimeGo = localStorage.getItem('timeGo');
+    if (savedTimeGo) timeGoInput.value = savedTimeGo;
+    else timeGoInput.value = 1.0;
+  }
+
+  function saveSettings() {
+    localStorage.setItem('audioVolume', audioVolume);
+    localStorage.setItem('readySelect', readySelect.value);
+    localStorage.setItem('setSelect', setSelect.value);
+    localStorage.setItem('goSelect', goSelect.value);
+
+    const selectedStartMode = [...startModeRadios].find(r => r.checked)?.value;
+    if (selectedStartMode) localStorage.setItem('startMode', selectedStartMode);
+
+    const selectedAutoMode = [...autoModeRadios].find(r => r.checked)?.value;
+    if (selectedAutoMode) localStorage.setItem('autoMode', selectedAutoMode);
+
+    localStorage.setItem('timeReady', timeReadyInput.value);
+    localStorage.setItem('timeSet', timeSetInput.value);
+    localStorage.setItem('timeGo', timeGoInput.value);
+  }
+
+  // スタート設定保存
+  function saveStartSettings() {
+    saveSettings();
+    alert('設定を保存しました');
+  }
+
+  // 音量スライダーイベント
+  volumeControl.addEventListener('input', (e) => {
+    audioVolume = parseFloat(e.target.value);
+    audioReady.volume = audioVolume;
+    audioSet.volume = audioVolume;
+    audioGo.volume = audioVolume;
   });
 
   // BLE接続ボタン
-  document.getElementById("connectBtn").addEventListener("click", () => {
-    connectBle();
-  });
+  connectBtn.addEventListener('click', connectBle);
 
-  // 初期ロード時処理
-  window.addEventListener("load", () => {
-    // 音声設定の復元
-    ["readySelect", "setSelect", "goSelect"].forEach(id => {
-      const v = localStorage.getItem(id);
-      if (v) {
-        const sel = document.getElementById(id);
-        sel.value = v;
-        const audio = document.getElementById(id.replace("Select", "audio"));
-        if (audio) {
-          audio.src = v;
-          audio.load();
-        }
-      }
-    });
-    // 音量設定復元
-    const vol = localStorage.getItem("audioVolume");
-    if (vol !== null) {
-      volumeControl.value = vol;
-      setAudioVolume(vol);
-    }
+  // 初期設定読み込み
+  loadSettings();
 
-    loadStartSettings();
-    loadAutoModeSelection();
-    refreshAudioSources();
-  });
 </script>
 </body>
 </html>
