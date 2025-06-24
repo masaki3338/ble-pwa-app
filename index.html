@@ -292,29 +292,41 @@
         <button onclick="showScreen('settingsMenuScreen')" aria-label="設定メニューに戻る">戻る</button>
       </section>
 
-      <!-- スタート設定 -->
       <section id="startSettingsScreen" class="screen" aria-label="スタート設定">
-        <div class="setting-card">
-          <div class="radio-group" role="radiogroup" aria-label="スタートモード選択">
-            <label><input type="radio" name="startMode" value="fixed" /> 固定</label>
-            <label><input type="radio" name="startMode" value="random" /> ランダム</label>
-          </div>
+      <h2 style="text-align:center;">ランダムスタート</h2>
+      <div class="setting-card" style="display:flex;flex-direction:column;align-items:center;gap:24px;">
+        
+        <!-- ステップ1 -->
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="start1.png" alt="位置について" style="height:48px;">
+          <input type="number" id="minReady" value="2.0" min="0.1" max="10" step="0.1" style="width:80px;">
+          <span>〜</span>
+          <input type="number" id="maxReady" value="4.0" min="0.1" max="10" step="0.1" style="width:80px;">
+          <span>秒</span>
         </div>
-        <div class="setting-card">
-          <label for="timeReady">位置について までの時間（秒）</label>
-          <input type="number" id="timeReady" min="1" max="10" step="0.1" />
+
+        <!-- ステップ2 -->
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="start2.png" alt="よーい" style="height:48px;">
+          <input type="number" id="minSet" value="1.5" min="0.1" max="10" step="0.1" style="width:80px;">
+          <span>〜</span>
+          <input type="number" id="maxSet" value="4.0" min="0.1" max="10" step="0.1" style="width:80px;">
+          <span>秒</span>
         </div>
-        <div class="setting-card">
-          <label for="timeSet">よーい までの時間（秒）</label>
-          <input type="number" id="timeSet" min="1" max="10" step="0.1" />
+
+        <!-- ステップ3 -->
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="start3.png" alt="スタート" style="height:48px;">
+          <input type="number" id="minGo" value="1.5" min="0.1" max="10" step="0.1" style="width:80px;">
+          <span>〜</span>
+          <input type="number" id="maxGo" value="3.0" min="0.1" max="10" step="0.1" style="width:80px;">
+          <span>秒</span>
         </div>
-        <div class="setting-card">
-          <label for="timeGo">スタート までの時間（秒）</label>
-          <input type="number" id="timeGo" min="1" max="10" step="0.1" />
-        </div>
-        <button onclick="saveStartSettings()">保存</button>
-        <button onclick="showScreen('settingsMenuScreen')">戻る</button>
-      </section>
+
+      </div>
+      <button onclick="saveRandomStartSettings()">保存</button>
+      <button onclick="showScreen('settingsMenuScreen')">戻る</button>
+  </section>
 
       <!-- 手動モード -->
       <section id="manualScreen" class="screen" aria-label="手動モード">
@@ -775,6 +787,16 @@ function startSequenceAfterCountdown() {
 
     // 停止時に止められるように保存
     window._autoTimerInterval = timer;
+  }
+
+  function saveRandomStartSettings() {
+    localStorage.setItem('minReady', document.getElementById('minReady').value);
+    localStorage.setItem('maxReady', document.getElementById('maxReady').value);
+    localStorage.setItem('minSet', document.getElementById('minSet').value);
+    localStorage.setItem('maxSet', document.getElementById('maxSet').value);
+    localStorage.setItem('minGo', document.getElementById('minGo').value);
+    localStorage.setItem('maxGo', document.getElementById('maxGo').value);
+    alert('ランダムスタート設定を保存しました');
   }
 
 </script>
