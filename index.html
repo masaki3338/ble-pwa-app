@@ -217,16 +217,6 @@
     <!-- 自動モード -->
     <div id="autoScreen" class="screen">
       <h2>自動モード</h2>
-
-      <!-- ここに固定/ランダムの選択UIを追加 -->
-      <div class="setting-card">
-        <label>スタートモード</label>
-        <div class="radio-group" id="autoStartModeGroup">
-          <label><input type="radio" name="autoStartMode" value="fixed" /> 固定</label>
-          <label><input type="radio" name="autoStartMode" value="random" /> ランダム</label>
-        </div>
-      </div>
-
       <div id="countdown"></div>
       <div id="measurementAuto">--.--.--</div>
       <button id="sequenceBtn">シーケンス開始</button>
@@ -381,7 +371,26 @@
     alert("スタート設定を保存しました");
   }
 
-  // 手動モードの音声操作ボタン
+  // 音声ファイル名から表示文字列を返すマッピング関数
+  function getDisplayTextForAudio(audioFileName) {
+    switch (audioFileName) {
+      // Ready
+      case "Ready.mp3": return "On Your Marks";
+      case "Ready-jp.mp3": return "位置について";
+
+      // Set
+      case "Set.mp3": return "Set";
+      case "Set-jp.mp3": return "よーい";
+
+      // Go (Start)
+      case "Go.mp3": return "Start";
+      case "whistle.mp3": return "スタート";
+
+      default: return "";
+    }
+  }
+
+  // 音声操作ボタンイベント（手動モード）
   document.getElementById("btnReady").addEventListener("click", () => {
     document.getElementById("audioReady").play();
   });
@@ -412,11 +421,13 @@
   document.getElementById("sequenceBtn").addEventListener("click", async () => {
     const mode = localStorage.getItem("startMode") || "fixed";
     if (mode === "fixed") {
+      // 固定シーケンス
       const tReady = parseFloat(localStorage.getItem("timeReady")) || 2.0;
       const tSet = parseFloat(localStorage.getItem("timeSet")) || 3.0;
       const tGo = parseFloat(localStorage.getItem("timeGo")) || 4.0;
       await runFixedSequence([tReady, tSet, tGo]);
     } else {
+      // ランダムシーケンス
       await runRandomSequence();
     }
   });
@@ -440,18 +451,22 @@
 
   async function runFixedSequence(times) {
     const countdown = document.getElementById("countdown");
-    countdown.textContent = "";
+
+    // 現在の音声設定値を取得
+    const readyAudio = localStorage.getItem("readySelect") || "Ready.mp3";
+    const setAudio = localStorage.getItem("setSelect") || "Set.mp3";
+    const goAudio = localStorage.getItem("goSelect") || "Go.mp3";
 
     await delay(times[0] * 1000);
-    countdown.textContent = "位置について";
+    countdown.textContent = getDisplayTextForAudio(readyAudio);
     document.getElementById("audioReady").play();
 
     await delay(times[1] * 1000);
-    countdown.textContent = "よーい";
+    countdown.textContent = getDisplayTextForAudio(setAudio);
     document.getElementById("audioSet").play();
 
     await delay(times[2] * 1000);
-    countdown.textContent = "スタート！";
+    countdown.textContent = getDisplayTextForAudio(goAudio);
     document.getElementById("audioGo").play();
 
     if (bleCharacteristic) {
@@ -463,19 +478,24 @@
 
   async function runRandomSequence() {
     const countdown = document.getElementById("countdown");
-    countdown.textContent = "位置について";
+
+    const readyAudio = localStorage.getItem("readySelect") || "Ready.mp3";
+    const setAudio = localStorage.getItem("setSelect") || "Set.mp3";
+    const goAudio = localStorage.getItem("goSelect") || "Go.mp3";
+
+    countdown.textContent = getDisplayTextForAudio(readyAudio);
     document.getElementById("audioReady").play();
 
-    // 3～7秒のランダム待機
+    // ランダム3～7秒待機
     const randomWait = 3000 + Math.random() * 4000;
     await delay(randomWait);
 
-    countdown.textContent = "よーい";
+    countdown.textContent = getDisplayTextForAudio(setAudio);
     document.getElementById("audioSet").play();
 
     await delay(1000);
 
-    countdown.textContent = "スタート！";
+    countdown.textContent = getDisplayTextForAudio(goAudio);
     document.getElementById("audioGo").play();
 
     if (bleCharacteristic) {
@@ -485,28 +505,10 @@
     countdown.textContent = "";
   }
 
-  // 自動モード画面のスタートモードUI同期処理
-  function setupAutoStartModeUI() {
-    const mode = localStorage.getItem("startMode") || "fixed";
-    const radios = document.querySelectorAll('input[name="autoStartMode"]');
-    radios.forEach(radio => {
-      radio.checked = (radio.value === mode);
-      radio.addEventListener("change", () => {
-        if (radio.checked) {
-          localStorage.setItem("startMode", radio.value);
-          // もし設定画面のラジオも連動させたい場合は以下を実装可能
-          const settingRadio = document.querySelector(`input[name="startMode"][value="${radio.value}"]`);
-          if (settingRadio) settingRadio.checked = true;
-        }
-      });
-    });
-  }
-
-  // ページロード時処理
+  // ページロード時にスタート設定読み込み
   window.addEventListener("load", () => {
     loadStartSettings();
     updateBleStatus(false);
-    setupAutoStartModeUI();
   });
 
   // BLE接続ボタン
@@ -514,6 +516,5 @@
     connectBle();
   });
 </script>
-
 </body>
 </html>
