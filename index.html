@@ -181,8 +181,16 @@
       <label><input type="radio" name="startMode" value="random" /> ランダム間隔</label>
     </div>
     <div class="setting-card">
-      <label for="intervalInput">間隔時間 (秒) <br /><small>1.0〜4.0秒</small></label>
-      <input type="number" id="intervalInput" min="1.0" max="4.0" step="0.1" value="2.0" />
+      <label for="interval1Input">「位置について」から「よーい」までの間隔 (秒) <br /><small>1.0〜4.0秒</small></label>
+      <input type="number" id="interval1Input" min="1.0" max="4.0" step="0.1" value="2.0" />
+    </div>
+    <div class="setting-card">
+      <label for="interval2Input">「よーい」から「スタート」までの間隔 (秒) <br /><small>1.0〜4.0秒</small></label>
+      <input type="number" id="interval2Input" min="1.0" max="4.0" step="0.1" value="2.0" />
+    </div>
+    <div class="setting-card">
+      <label for="interval3Input">「スタート」から次のアクションまでの間隔 (秒) <br /><small>1.0〜4.0秒</small></label>
+      <input type="number" id="interval3Input" min="1.0" max="4.0" step="0.1" value="2.0" />
     </div>
     <button onclick="saveStartSettings()">保存</button>
     <button onclick="showScreen('settingsMenuScreen')">戻る</button>
@@ -228,7 +236,7 @@
   // スタート設定デフォルト
   let startSettings = {
     mode: "fixed", // "fixed" or "random"
-    interval: 2.0  // 秒, 1.0〜4.0
+    intervals: [2.0, 2.0, 2.0] // 3区間の秒数配列
   };
 
   // 保存と読み込み
@@ -242,7 +250,9 @@
     radios.forEach(radio => {
       radio.checked = radio.value === startSettings.mode;
     });
-    document.getElementById("intervalInput").value = startSettings.interval;
+    document.getElementById("interval1Input").value = startSettings.intervals[0];
+    document.getElementById("interval2Input").value = startSettings.intervals[1];
+    document.getElementById("interval3Input").value = startSettings.intervals[2];
   }
   function saveStartSettings() {
     const radios = document.getElementsByName("startMode");
@@ -252,10 +262,14 @@
         break;
       }
     }
-    let val = parseFloat(document.getElementById("intervalInput").value);
-    if (isNaN(val) || val < 1.0) val = 1.0;
-    else if (val > 4.0) val = 4.0;
-    startSettings.interval = val;
+    function clampInterval(val) {
+      if (isNaN(val) || val < 1.0) return 1.0;
+      if (val > 4.0) return 4.0;
+      return val;
+    }
+    startSettings.intervals[0] = clampInterval(parseFloat(document.getElementById("interval1Input").value));
+    startSettings.intervals[1] = clampInterval(parseFloat(document.getElementById("interval2Input").value));
+    startSettings.intervals[2] = clampInterval(parseFloat(document.getElementById("interval3Input").value));
 
     localStorage.setItem("startSettings", JSON.stringify(startSettings));
     alert("スタート設定を保存しました");
@@ -339,40 +353,32 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // 固定 or ランダムに応じた3区間の間隔を秒で生成
-  // 戻り値は [interval1, interval2, interval3] の秒数配列
+  // 固定 or ランダムに応じた3区間の間隔をミリ秒で生成
   function generateIntervals() {
     if (startSettings.mode === "fixed") {
-      const v = startSettings.interval * 1000;
-      return [v, v, v];
+      // 固定は入力値そのまま(秒)をミリ秒に変換
+      return startSettings.intervals.map(v => v * 1000);
     } else {
-      // ランダムは1秒〜4秒の範囲で3回ランダム
-      const arr = [];
-      for (let i = 0; i < 3; i++) {
-        arr.push(randomInterval() * 1000);
-      }
-      return arr;
+      // ランダムは1〜4秒の範囲で区間ごとにランダム生成
+      return startSettings.intervals.map(() => randomInterval() * 1000);
     }
   }
   function randomInterval() {
-    return (Math.random() * (4.0 - 1.0)) + 1.0;
+    return Math.random() * (4.0 - 1.0) + 1.0;
   }
 
   async function runSequence(intervals) {
     const countdown = document.getElementById("countdown");
     countdown.style.display = "block";
 
-    // 位置について
     countdown.textContent = "位置について";
     document.getElementById("audioReady").play();
     await delay(intervals[0]);
 
-    // よーい
     countdown.textContent = "よーい";
     document.getElementById("audioSet").play();
     await delay(intervals[1]);
 
-    // スタート
     countdown.textContent = "スタート！";
     document.getElementById("audioGo").play();
     if (bleCharacteristic) {
@@ -423,10 +429,7 @@
     });
   });
 
-  // ページロード時にスタート設定読み込み
   loadStartSettings();
-
-  // BLEアイコン初期設定
   updateBleStatus(false);
 </script>
 </body>
