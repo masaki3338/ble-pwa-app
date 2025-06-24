@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BLE UI</title>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#000000">
   <style>
     body {
       margin: 0;
@@ -24,6 +22,7 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       padding: 20px;
       box-sizing: border-box;
+      position: relative;
     }
     .screen {
       display: none;
@@ -57,7 +56,6 @@
       background: rgba(255, 255, 255, 0.9);
       padding: 20px 40px;
       border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       z-index: 99999;
       pointer-events: none;
       display: none;
@@ -107,10 +105,31 @@
       outline-offset: 2px;
       cursor: pointer;
     }
+    #bleStatus {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #999;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 9999;
+    }
   </style>
 </head>
 <body>
   <div class="app-container">
+    <!-- BLEステータス表示 -->
+    <div id="bleStatus">
+      <span id="bleIcon">🔴</span>
+      <span id="bleText">未接続</span>
+    </div>
+
+    <!-- 測定表示 -->
     <div id="measurement">--.--.--</div>
 
     <!-- メニュー画面 -->
@@ -122,7 +141,7 @@
       <button onclick="showScreen('settingsMenuScreen')">設定</button>
     </div>
 
-    <!-- 設定メニュー画面 -->
+    <!-- 設定メニュー -->
     <div id="settingsMenuScreen" class="screen">
       <h2>設定メニュー</h2>
       <button onclick="showScreen('settingsScreen')">音声設定</button>
@@ -130,7 +149,7 @@
       <button onclick="showScreen('menuScreen')">戻る</button>
     </div>
 
-    <!-- 音声設定画面 -->
+    <!-- 音声設定 -->
     <div id="settingsScreen" class="screen">
       <h2>音声設定</h2>
       <div class="setting-card">
@@ -183,21 +202,34 @@
     </div>
   </div>
 
-  <!-- 音声ファイル -->
+  <!-- 音声 -->
   <audio id="audioReady" src="Ready.mp3"></audio>
   <audio id="audioSet" src="Set.mp3"></audio>
   <audio id="audioGo" src="Go.mp3"></audio>
 
   <script>
-    let bleDevice;
-    let bleCharacteristic;
+    let bleDevice = null;
+    let bleCharacteristic = null;
 
     function showScreen(screenId) {
       document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
       document.getElementById(screenId).classList.add("active");
+      document.getElementById("measurement").style.display = screenId === "menuScreen" ? "none" : "block";
+    }
 
-      const measurement = document.getElementById("measurement");
-      measurement.style.display = screenId === "menuScreen" ? "none" : "block";
+    function updateBleStatus(connected) {
+      const icon = document.getElementById("bleIcon");
+      const text = document.getElementById("bleText");
+      const container = document.getElementById("bleStatus");
+      if (connected) {
+        icon.textContent = "🟢";
+        text.textContent = "接続済み";
+        container.style.background = "#28a745";
+      } else {
+        icon.textContent = "🔴";
+        text.textContent = "未接続";
+        container.style.background = "#dc3545";
+      }
     }
 
     document.getElementById("connectBtn").addEventListener("click", async () => {
@@ -206,69 +238,50 @@
           filters: [{ services: ["12345678-1234-1234-1234-1234567890ab"] }],
           optionalServices: ["12345678-1234-1234-1234-1234567890ab"]
         });
+        bleDevice.addEventListener("gattserverdisconnected", () => {
+          updateBleStatus(false);
+          alert("BLE接続が切れました");
+        });
+
         const server = await bleDevice.gatt.connect();
         const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
         bleCharacteristic = await service.getCharacteristic("abcd1234-abcd-1234-abcd-1234567890ab");
         await bleCharacteristic.startNotifications();
         bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+        updateBleStatus(true);
         alert("接続成功");
       } catch (err) {
         alert("接続失敗：" + err);
+        updateBleStatus(false);
       }
     });
 
     function handleNotifications(event) {
       const value = event.target.value;
       const decoder = new TextDecoder('utf-8');
-      updateMeasurement(decoder.decode(value));
+      document.getElementById("measurement").textContent = decoder.decode(value);
     }
 
-    function updateMeasurement(text) {
-      document.getElementById("measurement").textContent = text;
-    }
-
-    ["btnReady", "btnSet", "btnStart"].forEach((id, i) => {
-      const audioIds = ["audioReady", "audioSet", "audioGo"];
-      document.getElementById(id).addEventListener("click", async () => {
-        document.getElementById(audioIds[i]).play();
-        if (id === "btnStart" && bleCharacteristic) {
-          setTimeout(() => {
-            bleCharacteristic.writeValue(new TextEncoder().encode("start"));
-          }, 500);
-        }
-      });
-    });
-
-    ["btnStopManual", "btnStopAuto"].forEach(id => {
-      document.getElementById(id).addEventListener("click", () => {
-        if (bleCharacteristic) {
-          bleCharacteristic.writeValue(new TextEncoder().encode("stop"));
-        }
-      });
-    });
-
-    ["btnResetManual", "btnResetAuto"].forEach(id => {
-      document.getElementById(id).addEventListener("click", () => {
-        if (bleCharacteristic) {
-          bleCharacteristic.writeValue(new TextEncoder().encode("reset"));
-        }
-        updateMeasurement("--.--.--");
-      });
-    });
-
-    document.getElementById("sequenceBtn").addEventListener("click", async () => {
-      try {
-        await showCountdown(3);
-        document.getElementById("audioReady").play();
-        await delay(3000);
-        document.getElementById("audioSet").play();
-        await delay(3000);
-        document.getElementById("audioGo").play();
+    document.getElementById("btnReady").addEventListener("click", () => document.getElementById("audioReady").play());
+    document.getElementById("btnSet").addEventListener("click", () => document.getElementById("audioSet").play());
+    document.getElementById("btnStart").addEventListener("click", () => {
+      document.getElementById("audioGo").play();
+      setTimeout(() => {
         if (bleCharacteristic) {
           bleCharacteristic.writeValue(new TextEncoder().encode("start"));
         }
-      } catch (e) {
-        alert("エラー：" + e);
+      }, 500);
+    });
+
+    document.getElementById("sequenceBtn").addEventListener("click", async () => {
+      await showCountdown(3);
+      document.getElementById("audioReady").play();
+      await delay(3000);
+      document.getElementById("audioSet").play();
+      await delay(3000);
+      document.getElementById("audioGo").play();
+      if (bleCharacteristic) {
+        bleCharacteristic.writeValue(new TextEncoder().encode("start"));
       }
     });
 
@@ -286,30 +299,47 @@
       countdown.style.display = "none";
     }
 
-    // 音声設定の保存と初期化
+    ["btnStopManual", "btnStopAuto"].forEach(id => {
+      document.getElementById(id).addEventListener("click", () => {
+        if (bleCharacteristic) {
+          bleCharacteristic.writeValue(new TextEncoder().encode("stop"));
+        }
+      });
+    });
+
+    ["btnResetManual", "btnResetAuto"].forEach(id => {
+      document.getElementById(id).addEventListener("click", () => {
+        if (bleCharacteristic) {
+          bleCharacteristic.writeValue(new TextEncoder().encode("reset"));
+        }
+        document.getElementById("measurement").textContent = "--.--.--";
+      });
+    });
+
     ["readySelect", "setSelect", "goSelect"].forEach(id => {
       const select = document.getElementById(id);
-      if (select) {
-        const stored = localStorage.getItem(id);
-        if (stored) {
-          select.value = stored;
-          const audio = document.getElementById(id.replace("Select", "audio"));
-          if (audio) {
-            audio.src = stored;
-            audio.load();
-          }
+      const stored = localStorage.getItem(id);
+      if (stored) {
+        select.value = stored;
+        const audio = document.getElementById(id.replace("Select", "audio"));
+        if (audio) {
+          audio.src = stored;
+          audio.load();
         }
-        select.addEventListener("change", () => {
-          const value = select.value;
-          localStorage.setItem(id, value);
-          const audio = document.getElementById(id.replace("Select", "audio"));
-          if (audio) {
-            audio.src = value;
-            audio.load();
-          }
-        });
       }
+      select.addEventListener("change", () => {
+        const value = select.value;
+        localStorage.setItem(id, value);
+        const audio = document.getElementById(id.replace("Select", "audio"));
+        if (audio) {
+          audio.src = value;
+          audio.load();
+        }
+      });
     });
+
+    // 初期状態は未接続表示
+    updateBleStatus(false);
   </script>
 </body>
 </html>
