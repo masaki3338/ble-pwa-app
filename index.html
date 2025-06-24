@@ -60,24 +60,20 @@
       pointer-events: none;
       display: none;
     }
-    #measurement {
-      position: fixed;
-      top: 60px;
-      left: 55%;
-      transform: translateX(-50%);
-      background: #fff;
-      padding: 8px 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    .measurement-display {
       font-weight: bold;
-      font-size: 72px;
+      font-size: 48px;
+      color: #222;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      text-align: center;
+      user-select: none;
       white-space: nowrap;
-      max-width: 90vw;
-      z-index: 10000;
-      display: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .extra-controls {
-      margin-top: 100px;
+      margin-top: 20px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -129,9 +125,6 @@
       <span id="bleText">未接続</span>
     </div>
 
-    <!-- 計測表示（手動・自動モードのみ） -->
-    <div id="measurement">--.--.--</div>
-
     <!-- メニュー -->
     <div id="menuScreen" class="screen active">
       <h2>メニュー</h2>
@@ -179,6 +172,7 @@
     <!-- 手動モード -->
     <div id="manualScreen" class="screen">
       <h2>手動モード</h2>
+      <div id="measurementManual" class="measurement-display">--.--.--</div>
       <button id="btnReady">位置について</button>
       <button id="btnSet">よーい</button>
       <button id="btnStart">スタート</button>
@@ -192,6 +186,7 @@
     <!-- 自動モード -->
     <div id="autoScreen" class="screen">
       <h2>自動モード</h2>
+      <div id="measurementAuto" class="measurement-display">--.--.--</div>
       <div id="countdown"></div>
       <button id="sequenceBtn">シーケンス開始</button>
       <div class="extra-controls">
@@ -214,10 +209,6 @@
     function showScreen(screenId) {
       document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
       document.getElementById(screenId).classList.add("active");
-
-      // 測定値表示：手動・自動モードのみ表示
-      const showMeasurement = screenId === "manualScreen" || screenId === "autoScreen";
-      document.getElementById("measurement").style.display = showMeasurement ? "block" : "none";
     }
 
     function updateBleStatus(connected) {
@@ -262,7 +253,14 @@
     function handleNotifications(event) {
       const value = event.target.value;
       const decoder = new TextDecoder("utf-8");
-      document.getElementById("measurement").textContent = decoder.decode(value);
+      const text = decoder.decode(value);
+
+      // 表示中の画面に応じて計測時間表示を更新
+      if (document.getElementById("manualScreen").classList.contains("active")) {
+        document.getElementById("measurementManual").textContent = text;
+      } else if (document.getElementById("autoScreen").classList.contains("active")) {
+        document.getElementById("measurementAuto").textContent = text;
+      }
     }
 
     document.getElementById("btnReady").addEventListener("click", () => document.getElementById("audioReady").play());
@@ -315,7 +313,9 @@
         if (bleCharacteristic) {
           bleCharacteristic.writeValue(new TextEncoder().encode("reset"));
         }
-        document.getElementById("measurement").textContent = "--.--.--";
+        // リセット時は両方の表示をリセット
+        document.getElementById("measurementManual").textContent = "--.--.--";
+        document.getElementById("measurementAuto").textContent = "--.--.--";
       });
     });
 
