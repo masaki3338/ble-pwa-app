@@ -427,6 +427,10 @@
   const SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
   const CHARACTERISTIC_UUID = '0000ffe1-0000-1000-8000-00805f9b34fb';
 
+  // タイマー管理用変数
+  let timerInterval = null;
+  let timerStartTime = null;
+
   // 音声プレイヤー
   const audioReady = document.getElementById('audioReady');
   const audioSet = document.getElementById('audioSet');
@@ -477,6 +481,63 @@
   // 音声ボリューム初期値
   let audioVolume = 1.0;
 
+function startStopwatch() {
+  timerStartTime = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = ((Date.now() - timerStartTime) / 1000).toFixed(2);
+    document.getElementById("measurementAuto").textContent = elapsed;
+  }, 100);
+}
+
+function stopStopwatch() {
+  clearInterval(timerInterval);
+}
+
+function resetStopwatch() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  document.getElementById("measurementAuto").textContent = "--.--.--";
+  document.getElementById("countdown").textContent = "";
+}
+function runCountdown(seconds, callback) {
+  let remaining = seconds;
+  document.getElementById("countdown").textContent = remaining;
+  const interval = setInterval(() => {
+    remaining--;
+    document.getElementById("countdown").textContent = remaining;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      callback();
+    }
+  }, 1000);
+}
+
+async function playPhase(label, audioId, waitTime) {
+  document.getElementById("countdown").textContent = label;
+  document.getElementById(audioId).play();
+  return new Promise(resolve => setTimeout(resolve, waitTime));
+}
+
+function getFixedStartTimes() {
+  return {
+    ready: parseFloat(document.getElementById("fixedReady").value) * 1000,
+    set: parseFloat(document.getElementById("fixedSet").value) * 1000,
+    go: parseFloat(document.getElementById("fixedGo").value) * 1000
+  };
+}
+
+function getRandomStartTimes() {
+  const rand = (minId, maxId) => {
+    const min = parseFloat(document.getElementById(minId).value);
+    const max = parseFloat(document.getElementById(maxId).value);
+    return (Math.random() * (max - min) + min) * 1000;
+  };
+  return {
+    ready: rand("minReady", "maxReady"),
+    set: rand("minSet", "maxSet"),
+    go: rand("minGo", "maxGo")
+  };
+}
   // BLE 接続状態更新
   function updateBleStatus(connected) {
     if (connected) {
@@ -860,6 +921,9 @@ function startSequenceAfterCountdown() {
     localStorage.setItem("fixedSet", document.getElementById("fixedSet").value);
     alert("固定スタート設定を保存しました");
   }
+  document.getElementById("btnStopAuto").addEventListener("click", () => stopStopwatch());
+  document.getElementById("btnResetAuto").addEventListener("click", () => resetStopwatch());
+
 </script>
 </body>
 </html>
