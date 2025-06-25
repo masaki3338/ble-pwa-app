@@ -851,10 +851,25 @@ function startStopwatchAuto() {
     clearInterval(window._autoTimerInterval);
   }
   window._autoTimerInterval = setInterval(() => {
-    const elapsed = Date.now() - startTime;
-    const seconds = (elapsed / 1000).toFixed(2);
-    autoMeasurementDisplay.textContent = seconds;
+    const elapsed = (Date.now() - startTime) / 1000;
+    autoMeasurementDisplay.textContent = formatTime(elapsed);
   }, 50);
+}
+
+
+function formatTime(seconds) {
+  if (seconds < 60) {
+    return seconds.toFixed(2); // 例: 9.58
+  } else {
+    const min = Math.floor(seconds / 60);
+    const sec = (seconds % 60).toFixed(2);
+
+    // 秒が1桁のときに "1:05.23" のように整える
+    const [intSec, decSec] = sec.split(".");
+    const paddedSec = intSec.padStart(2, "0") + "." + decSec;
+
+    return `${min}:${paddedSec}`;
+  }
 }
 
   function saveRandomStartSettings() {
