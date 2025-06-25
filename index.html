@@ -610,8 +610,8 @@ btnStart.addEventListener('click', () => {
 
     manualTimerInterval = setInterval(() => {
       const elapsedMs = performance.now() - manualStartTime;
-      const elapsedSec = (elapsedMs / 1000).toFixed(2);
-      manualMeasurementDisplay.textContent = elapsedSec;
+      const elapsedSec = elapsedMs / 1000;
+      manualMeasurementDisplay.textContent = formatTime(elapsedSec);
     }, 10);
 
   });
