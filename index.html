@@ -670,7 +670,6 @@ function startAutoSequence() {
 }
 
 function startSequenceAfterCountdown() {
-  // 固定 or ランダムに応じて秒数を取得
   let timeReady, timeSet, timeGo;
 
   const autoMode = [...autoModeRadios].find(r => r.checked)?.value || 'fixed';
@@ -679,7 +678,6 @@ function startSequenceAfterCountdown() {
     timeSet = parseFloat(document.getElementById('fixedSet').value) || 2.0;
     timeGo = parseFloat(document.getElementById('fixedGo').value) || 1.0;
   } else {
-    // ランダム範囲内の秒数をランダム抽出
     const minReady = parseFloat(document.getElementById('minReady').value) || 2.0;
     const maxReady = parseFloat(document.getElementById('maxReady').value) || 4.0;
     timeReady = Math.random() * (maxReady - minReady) + minReady;
@@ -699,38 +697,35 @@ function startSequenceAfterCountdown() {
   // 位置について
   autoTimers.push(setTimeout(() => {
     playAudio('ready');
-    autoMeasurementDisplay.textContent = '位置について';
     sendBle('READY');
   }, 0));
 
   // よーい
   autoTimers.push(setTimeout(() => {
     playAudio('set');
-    autoMeasurementDisplay.textContent = 'よーい';
     sendBle('SET');
   }, timeReady * 1000));
 
   // スタート
   autoTimers.push(setTimeout(() => {
     playAudio('go');
-    autoMeasurementDisplay.textContent = 'スタート！';
     sendBle('GO');
-    startStopwatchAuto(); // ⬅️ 計測タイマ開始（自動モード）
+    startStopwatchAuto();  // ← 経過時間の表示を開始
   }, (timeReady + timeSet) * 1000));
 
-  // カウントダウン表示
-  //const intervalMs = 100;
-  //autoTimers.push(setInterval(() => {
-  //  countdownValue -= intervalMs / 1000;
-  //  if (countdownValue < 0) countdownValue = 0;
-  //  countdownDisplay.textContent = countdownValue.toFixed(2);
-
-  //  if (countdownValue <= 0) {
-  //    clearAutoTimers();
-  //    autoSequenceRunning = false;
-  //  }
-  //}, intervalMs));
+  // ⬇️ カウントダウン表示をタイマーエリアに上書きして表示
+  const intervalMs = 100;
+  autoTimers.push(setInterval(() => {
+    countdownValue -= intervalMs / 1000;
+    if (countdownValue > 0) {
+      autoMeasurementDisplay.textContent = countdownValue.toFixed(2);
+    } else {
+      clearAutoTimers();
+      autoSequenceRunning = false;
+    }
+  }, intervalMs));
 }
+
   // タイマークリア
   function clearAutoTimers() {
     autoTimers.forEach(id => clearTimeout(id));
