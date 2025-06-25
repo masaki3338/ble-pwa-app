@@ -329,39 +329,38 @@
           <h3 style="text-align:center;">ランダムスタート</h3>
           <div class="setting-card" style="display:flex;flex-direction:column;align-items:center;gap:24px;">
 
-          <!-- ランダムスタート：位置について -->
-          <div style="display:flex;flex-direction:column;align-items:center; margin-bottom: 24px;">
-            <label>位置について までの時間（秒）</label>
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <input type="number" id="minReady" value="2.0" step="0.1" style="width: 60px;"> 秒
-              <span>〜</span>
-              <input type="number" id="maxReady" value="4.0" step="0.1" style="width: 60px;"> 秒
-            </div>
-            <img src="start1.png" alt="位置について" style="height: 60px; margin-top: 8px;">
-          </div>
+<!-- ランダムスタート：位置について -->
+<div style="display:flex;flex-direction:column;align-items:center; margin-bottom: 24px;">
+  <label>位置について までの時間（秒）</label>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <input type="number" id="minReady" value="2.0" step="0.1" min="1.0" max="4.0" style="width: 60px;"> 秒
+    <span>〜</span>
+    <input type="number" id="maxReady" value="4.0" step="0.1" min="1.0" max="4.0" style="width: 60px;"> 秒
+  </div>
+  <img src="start1.png" alt="位置について" style="height: 60px; margin-top: 8px;">
+</div>
 
-          <!-- ランダムスタート：よーい -->
-          <div style="display:flex;flex-direction:column;align-items:center; margin-bottom: 24px;">
-            <label>よーい までの時間（秒）</label>
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <input type="number" id="minSet" value="1.5" step="0.1" style="width: 60px;"> 秒
-              <span>〜</span>
-              <input type="number" id="maxSet" value="3.0" step="0.1" style="width: 60px;"> 秒
-            </div>
-            <img src="start2.png" alt="よーい" style="height: 60px; margin-top: 8px;">
-          </div>
+<!-- ランダムスタート：よーい -->
+<div style="display:flex;flex-direction:column;align-items:center; margin-bottom: 24px;">
+  <label>よーい までの時間（秒）</label>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <input type="number" id="minSet" value="1.5" step="0.1" min="1.0" max="4.0" style="width: 60px;"> 秒
+    <span>〜</span>
+    <input type="number" id="maxSet" value="3.0" step="0.1" min="1.0" max="4.0" style="width: 60px;"> 秒
+  </div>
+  <img src="start2.png" alt="よーい" style="height: 60px; margin-top: 8px;">
+</div>
 
-          <!-- ランダムスタート：スタート -->
-          <div style="display:flex;flex-direction:column;align-items:center; margin-bottom: 24px;">
-            <label>スタート までの時間（秒）</label>
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <input type="number" id="minGo" value="0.8" step="0.1" style="width: 60px;"> 秒
-              <span>〜</span>
-              <input type="number" id="maxGo" value="1.2" step="0.1" style="width: 60px;"> 秒
-            </div>
-            <img src="start3.png" alt="スタート" style="height: 60px; margin-top: 8px;">
-          </div>
-
+<!-- ランダムスタート：スタート -->
+<div style="display:flex;flex-direction:column;align-items:center; margin-bottom: 24px;">
+  <label>スタート までの時間（秒）</label>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <input type="number" id="minGo" value="0.8" step="0.1" min="1.0" max="4.0" style="width: 60px;"> 秒
+    <span>〜</span>
+    <input type="number" id="maxGo" value="1.2" step="0.1" min="1.0" max="4.0" style="width: 60px;"> 秒
+  </div>
+  <img src="start3.png" alt="スタート" style="height: 60px; margin-top: 8px;">
+</div>
 
           </div>
           <button onclick="saveRandomStartSettings()">保存</button>
