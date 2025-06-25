@@ -718,7 +718,19 @@ function startSequenceAfterCountdown() {
     startStopwatchAuto(); // ⬅️ 計測タイマ開始（自動モード）
   }, (timeReady + timeSet) * 1000));
 
+  // カウントダウン表示
+  const intervalMs = 100;
+  autoTimers.push(setInterval(() => {
+    countdownValue -= intervalMs / 1000;
+    if (countdownValue < 0) countdownValue = 0;
+    countdownDisplay.textContent = countdownValue.toFixed(2);
 
+    if (countdownValue <= 0) {
+      clearAutoTimers();
+      autoSequenceRunning = false;
+    }
+  }, intervalMs));
+}
   // タイマークリア
   function clearAutoTimers() {
     autoTimers.forEach(id => clearTimeout(id));
