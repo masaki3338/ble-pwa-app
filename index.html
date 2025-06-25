@@ -851,8 +851,9 @@ function startStopwatchAuto() {
     clearInterval(window._autoTimerInterval);
   }
   window._autoTimerInterval = setInterval(() => {
-    const elapsed = (Date.now() - startTime) / 1000;
-    autoMeasurementDisplay.textContent = formatTime(elapsed);
+    const elapsed = Date.now() - startTime;
+    const seconds = (elapsed / 1000).toFixed(2);
+    autoMeasurementDisplay.textContent = seconds;
   }, 50);
 }
 
