@@ -917,6 +917,16 @@ function formatTime(seconds) {
     localStorage.setItem("fixedSet", document.getElementById("fixedSet").value);
     alert("固定スタート設定を保存しました");
   }
+
+      // DOM読み込み後にイベント登録
+    document.addEventListener("DOMContentLoaded", () => {
+      const bleBtn = document.getElementById("connectBtn");
+      if (bleBtn) {
+        bleBtn.addEventListener("click", connectBLE);
+      } else {
+        console.error("BLE接続ボタンが見つかりません");
+      }
+    });
 </script>
 </body>
 </html>
