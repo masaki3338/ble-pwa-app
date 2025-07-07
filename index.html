@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<link rel="manifest" href="manifest.json" /> 
+<link rel="manifest" href="/manifest.json">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>ATHLETE'S LOAD</title>
@@ -444,10 +444,8 @@
   let bleCharacteristic = null;
 
   // BLEサービス・キャラクタリスティックUUID（例）
-  //const SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
-  //const CHARACTERISTIC_UUID = '0000ffe1-0000-1000-8000-00805f9b34fb';
-  const SERVICE_UUID = '12345678-1234-1234-1234-1234567890ab
-  const CHARACTERISTIC_UUID = 'abcd1234-abcd-1234-abcd-1234567890ab';
+  const SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+  const CHARACTERISTIC_UUID = '0000ffe1-0000-1000-8000-00805f9b34fb';
 
   // 音声プレイヤー
   const audioReady = document.getElementById('audioReady');
@@ -470,9 +468,9 @@
   const goSelect = document.getElementById('goSelect');
   const volumeControl = document.getElementById('volumeControl');
 
- // const timeReadyInput = document.getElementById('timeReady');
- // const timeSetInput = document.getElementById('timeSet');
- // const timeGoInput = document.getElementById('timeGo');
+  const timeReadyInput = document.getElementById('timeReady');
+  const timeSetInput = document.getElementById('timeSet');
+  const timeGoInput = document.getElementById('timeGo');
 
   // 自動モードラジオ
   const autoModeRadios = document.getElementsByName('autoMode');
@@ -513,31 +511,38 @@
   }
 
   // BLE接続処理
-  async function connectBLE() {
-  try {
-    const device = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: "ESP32" }],  // ESP32-Stopwatch など
-      optionalServices: [SERVICE_UUID]
-    });
+  async function connectBle() {
+    try {
+      if (bleDevice && bleDevice.gatt.connected) {
+        // 切断
+        await bleDevice.gatt.disconnect();
+        updateBleStatus(false);
+        return;
+      }
 
-    const server = await device.gatt.connect();
-    const service = await server.getPrimaryService(SERVICE_UUID);
-    const characteristic = await service.getCharacteristic('abcd1234-abcd-1234-abcd-1234567890ab');
+      bleDevice = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [SERVICE_UUID] }],
+      });
 
-    // 通知受信
-    await characteristic.startNotifications();
-    characteristic.addEventListener("characteristicvaluechanged", (event) => {
-      const value = new TextDecoder().decode(event.target.value);
-      console.log("受信:", value);
-      document.getElementById("display").textContent = value;
-    });
+      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
-    console.log("✅ BLE接続成功");
+      bleServer = await bleDevice.gatt.connect();
+      const service = await bleServer.getPrimaryService(SERVICE_UUID);
+      bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
 
-  } catch (error) {
-    console.error("❌ BLE接続エラー:", error);
+      updateBleStatus(true);
+
+      // 必要なら通知設定
+      await bleCharacteristic.startNotifications();
+      bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
+
+    } catch (error) {
+      console.error('BLE接続失敗:', error);
+      alert('BLE接続に失敗しました: ' + error.message);
+      updateBleStatus(false);
+    }
   }
-}
+
   // BLE切断時処理
   function onDisconnected() {
     console.log('BLE切断されました');
