@@ -514,6 +514,7 @@
 
   // BLE接続処理
   async function connectBle() {
+    console.log('✅ connectBle() 呼び出し成功');  // ← これを追加
     try {
       if (bleDevice && bleDevice.gatt.connected) {
         // 切断
