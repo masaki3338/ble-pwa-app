@@ -520,9 +520,13 @@
         return;
       }
 
-      bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [SERVICE_UUID] }],
-      });
+      //bleDevice = await navigator.bluetooth.requestDevice({
+      //  filters: [{ services: [SERVICE_UUID] }],
+      //});
+      navigator.bluetooth.requestDevice({
+        filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }],
+        optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+      })
 
       bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
