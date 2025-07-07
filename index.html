@@ -513,39 +513,31 @@
   }
 
   // BLE接続処理
-  async function connectBle() {
-    console.log('✅ connectBle() 呼び出し成功');  // ← これを追加
-    try {
-      if (bleDevice && bleDevice.gatt.connected) {
-        // 切断
-        await bleDevice.gatt.disconnect();
-        updateBleStatus(false);
-        return;
-      }
+  async function connectBLE() {
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ namePrefix: "ESP32" }],  // ESP32-Stopwatch など
+      optionalServices: [SERVICE_UUID]
+    });
 
-      bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [SERVICE_UUID] }],
-      });
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    const characteristic = await service.getCharacteristic('abcd1234-abcd-1234-abcd-1234567890ab');
 
-      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+    // 通知受信
+    await characteristic.startNotifications();
+    characteristic.addEventListener("characteristicvaluechanged", (event) => {
+      const value = new TextDecoder().decode(event.target.value);
+      console.log("受信:", value);
+      document.getElementById("display").textContent = value;
+    });
 
-      bleServer = await bleDevice.gatt.connect();
-      const service = await bleServer.getPrimaryService(SERVICE_UUID);
-      bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+    console.log("✅ BLE接続成功");
 
-      updateBleStatus(true);
-
-      // 必要なら通知設定
-      await bleCharacteristic.startNotifications();
-      bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
-
-    } catch (error) {
-      console.error('BLE接続失敗:', error);
-      alert('BLE接続に失敗しました: ' + error.message);
-      updateBleStatus(false);
-    }
+  } catch (error) {
+    console.error("❌ BLE接続エラー:", error);
   }
-
+}
   // BLE切断時処理
   function onDisconnected() {
     console.log('BLE切断されました');
