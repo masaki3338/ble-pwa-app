@@ -511,41 +511,17 @@
   }
 
   // BLE接続処理
-  async function connectBle() {
-    try {
-      if (bleDevice && bleDevice.gatt.connected) {
-        // 切断
-        await bleDevice.gatt.disconnect();
-        updateBleStatus(false);
-        return;
+      async function connectBLE() {
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }]
+        });
+        alert(`接続成功: ${device.name}`);
+        // 必要に応じてここで接続処理を続ける
+      } catch (err) {
+        alert("BLE接続に失敗しました: " + err.message);
       }
-
-      //bleDevice = await navigator.bluetooth.requestDevice({
-      //  filters: [{ services: [SERVICE_UUID] }],
-      //});
-      navigator.bluetooth.requestDevice({
-        filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }],
-        optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
-      })
-
-      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-      bleServer = await bleDevice.gatt.connect();
-      const service = await bleServer.getPrimaryService(SERVICE_UUID);
-      bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-      updateBleStatus(true);
-
-      // 必要なら通知設定
-      await bleCharacteristic.startNotifications();
-      bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
-
-    } catch (error) {
-      console.error('BLE接続失敗:', error);
-      alert('BLE接続に失敗しました: ' + error.message);
-      updateBleStatus(false);
     }
-  }
 
   // BLE切断時処理
   function onDisconnected() {
