@@ -439,136 +439,70 @@
 
 <script>
   // --- 共通変数 ---
-  let bleDevice = null;
+   let bleDevice = null;
   let bleServer = null;
   let bleCharacteristic = null;
 
-  // BLEサービス・キャラクタリスティックUUID（例）
   const SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
   const CHARACTERISTIC_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
 
-  // 音声プレイヤー
-  const audioReady = document.getElementById('audioReady');
-  const audioSet = document.getElementById('audioSet');
-  const audioGo = document.getElementById('audioGo');
+  async function connectBle() {
+    try {
+      if (bleDevice && bleDevice.gatt.connected) {
+        await bleDevice.gatt.disconnect();
+        updateBleStatus(false);
+        return;
+      }
 
-  // UI要素
-  const bleStatus = document.getElementById('bleStatus');
-  const bleIcon = document.getElementById('bleIcon');
-  const bleText = document.getElementById('bleText');
-  const connectBtn = document.getElementById('connectBtn');
+      // ✅ 修正：デバイス取得と代入
+      bleDevice = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [SERVICE_UUID] }],
+        optionalServices: [SERVICE_UUID]
+      });
 
-  const manualMeasurementDisplay = document.getElementById('measurementManual');
-  const autoMeasurementDisplay = document.getElementById('measurementAuto');
-  const countdownDisplay = document.getElementById('countdown');
+      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
-  // 設定要素
-  const readySelect = document.getElementById('readySelect');
-  const setSelect = document.getElementById('setSelect');
-  const goSelect = document.getElementById('goSelect');
-  const volumeControl = document.getElementById('volumeControl');
+      bleServer = await bleDevice.gatt.connect();
+      const service = await bleServer.getPrimaryService(SERVICE_UUID);
+      bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
 
-  const timeReadyInput = document.getElementById('timeReady');
-  const timeSetInput = document.getElementById('timeSet');
-  const timeGoInput = document.getElementById('timeGo');
+      await bleCharacteristic.startNotifications();
+      bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
 
-  // 自動モードラジオ
-  const autoModeRadios = document.getElementsByName('autoMode');
-  const startModeRadios = document.getElementsByName('startMode');
-
-  // 手動モードボタン
-  const btnReady = document.getElementById('btnReady');
-  const btnSet = document.getElementById('btnSet');
-  const btnStart = document.getElementById('btnStart');
-  const btnStopManual = document.getElementById('btnStopManual');
-  const btnResetManual = document.getElementById('btnResetManual');
-
-  // 自動モードボタン
-  const sequenceBtn = document.getElementById('sequenceBtn');
-  const btnStopAuto = document.getElementById('btnStopAuto');
-  const btnResetAuto = document.getElementById('btnResetAuto');
-
-  // 状態変数
-  let measurementManual = null;
-  let measurementAuto = null;
-  let countdownTimerId = null;
-  let countdownValue = 0;
-
-  // 音声ボリューム初期値
-  let audioVolume = 1.0;
-
-  // BLE 接続状態更新
-  function updateBleStatus(connected) {
-    if (connected) {
-      bleIcon.textContent = '🟢';
-      bleText.textContent = '接続済み';
-      connectBtn.textContent = '切断';
-    } else {
-      bleIcon.textContent = '🔴';
-      bleText.textContent = '未接続';
-      connectBtn.textContent = 'BLE接続';
+      updateBleStatus(true);
+    } catch (error) {
+      console.error('BLE接続失敗:', error);
+      alert('BLE接続に失敗しました: ' + error.message);
+      updateBleStatus(false);
     }
   }
 
-// BLE接続処理（修正済み）
-async function connectBle() {
-  try {
-    if (bleDevice && bleDevice.gatt.connected) {
-      // 切断処理
-      await bleDevice.gatt.disconnect();
-      updateBleStatus(false);
+  async function sendCommand(command) {
+    if (!bleCharacteristic) {
+      alert("BLE未接続です");
       return;
     }
-
-    // ← await を追加
-    bleDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }],
-      optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
-    });
-
-    // ← ここで初めて bleDevice が有効になる
-    bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-    bleServer = await bleDevice.gatt.connect();
-    const service = await bleServer.getPrimaryService(SERVICE_UUID);
-    bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-    updateBleStatus(true);
-
-    // 通知を受け取るようにする（任意）
-    await bleCharacteristic.startNotifications();
-    bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
-
-  } catch (error) {
-    console.error('BLE接続失敗:', error);
-    alert('BLE接続に失敗しました: ' + error.message);
-    updateBleStatus(false);
+    const encoder = new TextEncoder();
+    await bleCharacteristic.writeValue(encoder.encode(command));
+    console.log("Sent:", command);
   }
-}
 
-  // BLE切断時処理
   function onDisconnected() {
-    console.log('BLE切断されました');
+    console.log("BLE切断されました");
     updateBleStatus(false);
   }
 
-  // BLEからのデータ受信処理
-  function handleBleData(event) {
-    const value = event.target.value;
-    // 受信バイトを文字列に変換（例）
-    let receivedText = '';
-    for (let i = 0; i < value.byteLength; i++) {
-      receivedText += String.fromCharCode(value.getUint8(i));
-    }
-    // 例: 受信した文字列を手動・自動モード表示に反映
-    if (document.getElementById('manualScreen').classList.contains('active')) {
-      manualMeasurementDisplay.textContent = receivedText;
-    }
-    if (document.getElementById('autoScreen').classList.contains('active')) {
-      autoMeasurementDisplay.textContent = receivedText;
+  function updateBleStatus(isConnected) {
+    const status = document.getElementById("bleStatus");
+    if (status) {
+      status.textContent = isConnected ? "✅ 接続中" : "❌ 未接続";
     }
   }
 
+  function handleBleData(event) {
+    const value = new TextDecoder().decode(event.target.value);
+    console.log("受信:", value);
+  }
   // 画面切替関数
   function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
