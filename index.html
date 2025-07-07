@@ -510,42 +510,41 @@
     }
   }
 
-  // BLE接続処理
-  async function connectBle() {
-    try {
-      if (bleDevice && bleDevice.gatt.connected) {
-        // 切断
-        await bleDevice.gatt.disconnect();
-        updateBleStatus(false);
-        return;
-      }
-
-      //bleDevice = await navigator.bluetooth.requestDevice({
-      //  filters: [{ services: [SERVICE_UUID] }],
-      //});
-      navigator.bluetooth.requestDevice({
-        filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }],
-        optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
-      })
-
-      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-      bleServer = await bleDevice.gatt.connect();
-      const service = await bleServer.getPrimaryService(SERVICE_UUID);
-      bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-      updateBleStatus(true);
-
-      // 必要なら通知設定
-      await bleCharacteristic.startNotifications();
-      bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
-
-    } catch (error) {
-      console.error('BLE接続失敗:', error);
-      alert('BLE接続に失敗しました: ' + error.message);
+// BLE接続処理（修正済み）
+async function connectBle() {
+  try {
+    if (bleDevice && bleDevice.gatt.connected) {
+      // 切断処理
+      await bleDevice.gatt.disconnect();
       updateBleStatus(false);
+      return;
     }
+
+    // ← await を追加
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }],
+      optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+    });
+
+    // ← ここで初めて bleDevice が有効になる
+    bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+    bleServer = await bleDevice.gatt.connect();
+    const service = await bleServer.getPrimaryService(SERVICE_UUID);
+    bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+    updateBleStatus(true);
+
+    // 通知を受け取るようにする（任意）
+    await bleCharacteristic.startNotifications();
+    bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
+
+  } catch (error) {
+    console.error('BLE接続失敗:', error);
+    alert('BLE接続に失敗しました: ' + error.message);
+    updateBleStatus(false);
   }
+}
 
   // BLE切断時処理
   function onDisconnected() {
