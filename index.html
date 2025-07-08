@@ -590,6 +590,41 @@ function handleBleData(event) {
   console.log("BLE通知受信:", value);
 
   if (value === "start") {
+    if (manualTimerInterval) {
+      clearInterval(manualTimerInterval);
+      manualTimerInterval = null;
+    }
+
+    manualStartTime = performance.now();
+    manualTimerInterval = setInterval(() => {
+      const elapsedMs = performance.now() - manualStartTime;
+      const elapsedSec = elapsedMs / 1000;
+      manualMeasurementDisplay.textContent = formatTime(elapsedSec);
+    }, 10);
+
+  } else if (value === "stop") {
+    // 手動モードタイマー停止
+    if (manualTimerInterval) {
+      clearInterval(manualTimerInterval);
+      manualTimerInterval = null;
+    }
+
+    // 自動モードタイマー停止
+    if (window._autoTimerInterval) {
+      clearInterval(window._autoTimerInterval);
+      window._autoTimerInterval = null;
+    }
+
+    // 表示はそのまま残す（←ここが変更点）
+    // manualMeasurementDisplay.textContent = '--.--.--';
+    // autoMeasurementDisplay.textContent = '--.--.--';
+  }
+}
+
+  const value = new TextDecoder().decode(event.target.value);
+  console.log("BLE通知受信:", value);
+
+  if (value === "start") {
     // 手動タイマーが動いていたら止める
     if (manualTimerInterval) {
       clearInterval(manualTimerInterval);
