@@ -585,14 +585,36 @@ function onDisconnected() {
   updateBleStatus(false);
 }
 
-// 通知受信時の処理
 function handleBleData(event) {
   const value = new TextDecoder().decode(event.target.value);
   console.log("BLE通知受信:", value);
+
   if (value === "start") {
-    startStopwatch();
+    // 必要ならstartStopwatch()関数をここで呼び出す
+    if (manualTimerInterval) {
+      clearInterval(manualTimerInterval);
+      manualTimerInterval = null;
+    }
+
+    manualStartTime = performance.now();
+    manualTimerInterval = setInterval(() => {
+      const elapsedMs = performance.now() - manualStartTime;
+      const elapsedSec = elapsedMs / 1000;
+      manualMeasurementDisplay.textContent = formatTime(elapsedSec);
+    }, 10);
   } else if (value === "stop") {
-    clearInterval(stopwatchInterval); // ← これで停止処理
+    if (manualTimerInterval) {
+      clearInterval(manualTimerInterval);
+      manualTimerInterval = null;
+    }
+
+    if (window._autoTimerInterval) {
+      clearInterval(window._autoTimerInterval);
+      window._autoTimerInterval = null;
+    }
+
+    manualMeasurementDisplay.textContent = '--.--.--';
+    autoMeasurementDisplay.textContent = '--.--.--';
   }
 }
 
