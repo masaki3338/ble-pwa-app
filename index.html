@@ -589,14 +589,36 @@ function handleBleData(event) {
   const value = new TextDecoder().decode(event.target.value);
   console.log("BLE通知受信:", value);
 
-  // 値が mm:ss.SS 形式（例: 00:12.34）と想定
   const timePattern = /^\d{2}:\d{2}\.\d{2}$/;
-  if (timePattern.test(value)) {
-    // フォーマット済みのタイム表示（00:12.34など）をそのまま表示
+
+  if (value === "start") {
+    if (manualTimerInterval) clearInterval(manualTimerInterval);
+
+    manualStartTime = performance.now();
+    manualTimerInterval = setInterval(() => {
+      const elapsedMs = performance.now() - manualStartTime;
+      const elapsedSec = elapsedMs / 1000;
+      manualMeasurementDisplay.textContent = formatTime(elapsedSec);
+    }, 10);
+
+  } else if (timePattern.test(value)) {
+    // 00:12.34 形式の通知 → そのまま表示
     manualMeasurementDisplay.textContent = value;
     autoMeasurementDisplay.textContent = value;
 
-    // タイマー停止（念のため）
+    if (manualTimerInterval) {
+      clearInterval(manualTimerInterval);
+      manualTimerInterval = null;
+    }
+    if (window._autoTimerInterval) {
+      clearInterval(window._autoTimerInterval);
+      window._autoTimerInterval = null;
+    }
+
+  } else if (value === "reset") {
+    manualMeasurementDisplay.textContent = "--.--.--";
+    autoMeasurementDisplay.textContent = "--.--.--";
+
     if (manualTimerInterval) {
       clearInterval(manualTimerInterval);
       manualTimerInterval = null;
@@ -607,6 +629,7 @@ function handleBleData(event) {
     }
   }
 }
+
  
 
 
