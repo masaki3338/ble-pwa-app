@@ -588,7 +588,12 @@ function onDisconnected() {
 // 通知受信時の処理
 function handleBleData(event) {
   const value = new TextDecoder().decode(event.target.value);
-  console.log("受信:", value);
+  console.log("BLE通知受信:", value);
+  if (value === "start") {
+    startStopwatch();
+  } else if (value === "stop") {
+    clearInterval(stopwatchInterval); // ← これで停止処理
+  }
 }
 
   // 画面切替関数
