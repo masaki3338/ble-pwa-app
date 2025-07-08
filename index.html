@@ -544,13 +544,6 @@
   }
 }
 
-// BLE接続状態表示
-function updateBleStatus(connected) {
-  const statusEl = document.getElementById("bleStatus");
-  if (statusEl) {
-    statusEl.textContent = connected ? "接続中" : "未接続";
-  }
-}
 
 // 切断されたときの処理
 function onDisconnected() {
