@@ -511,9 +511,6 @@
       connectBtn.textContent = 'BLE接続';
     }
   }
-  window.onload = () => {
-    document.getElementById("connectBtn").addEventListener("click", connectBle);
-  };
 
     // BLE接続処理
     async function connectBle() {
@@ -859,9 +856,6 @@ function stopAutoSequence() {
     audioSet.volume = audioVolume;
     audioGo.volume = audioVolume;
   });
-
-  // BLE接続ボタン
-  connectBtn.addEventListener('click', connectBle);
 
   // 初期設定読み込み
   loadSettings();
