@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<link rel="manifest" href="/ble-pwa-app/manifest.json">
+<link rel="manifest" href="manifest.json" /> 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>ATHLETE'S LOAD</title>
@@ -439,99 +439,128 @@
 
 <script>
   // --- 共通変数 ---
-   let bleDevice = null;
+  let bleDevice = null;
   let bleServer = null;
   let bleCharacteristic = null;
 
-  const SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
-  const CHARACTERISTIC_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+  // BLEサービス・キャラクタリスティックUUID（例）
+  //const SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+  //const CHARACTERISTIC_UUID = '0000ffe1-0000-1000-8000-00805f9b34fb';
+  const SERVICE_UUID = '12345678-1234-1234-1234-1234567890ab
+  const CHARACTERISTIC_UUID = 'abcd1234-abcd-1234-abcd-1234567890ab';
 
-async function connectBle() {
-  try {
-    if (bleDevice && bleDevice.gatt.connected) {
-      await bleDevice.gatt.disconnect();
-      updateBleStatus(false);
-      return;
+  // 音声プレイヤー
+  const audioReady = document.getElementById('audioReady');
+  const audioSet = document.getElementById('audioSet');
+  const audioGo = document.getElementById('audioGo');
+
+  // UI要素
+  const bleStatus = document.getElementById('bleStatus');
+  const bleIcon = document.getElementById('bleIcon');
+  const bleText = document.getElementById('bleText');
+  const connectBtn = document.getElementById('connectBtn');
+
+  const manualMeasurementDisplay = document.getElementById('measurementManual');
+  const autoMeasurementDisplay = document.getElementById('measurementAuto');
+  const countdownDisplay = document.getElementById('countdown');
+
+  // 設定要素
+  const readySelect = document.getElementById('readySelect');
+  const setSelect = document.getElementById('setSelect');
+  const goSelect = document.getElementById('goSelect');
+  const volumeControl = document.getElementById('volumeControl');
+
+ // const timeReadyInput = document.getElementById('timeReady');
+ // const timeSetInput = document.getElementById('timeSet');
+ // const timeGoInput = document.getElementById('timeGo');
+
+  // 自動モードラジオ
+  const autoModeRadios = document.getElementsByName('autoMode');
+  const startModeRadios = document.getElementsByName('startMode');
+
+  // 手動モードボタン
+  const btnReady = document.getElementById('btnReady');
+  const btnSet = document.getElementById('btnSet');
+  const btnStart = document.getElementById('btnStart');
+  const btnStopManual = document.getElementById('btnStopManual');
+  const btnResetManual = document.getElementById('btnResetManual');
+
+  // 自動モードボタン
+  const sequenceBtn = document.getElementById('sequenceBtn');
+  const btnStopAuto = document.getElementById('btnStopAuto');
+  const btnResetAuto = document.getElementById('btnResetAuto');
+
+  // 状態変数
+  let measurementManual = null;
+  let measurementAuto = null;
+  let countdownTimerId = null;
+  let countdownValue = 0;
+
+  // 音声ボリューム初期値
+  let audioVolume = 1.0;
+
+  // BLE 接続状態更新
+  function updateBleStatus(connected) {
+    if (connected) {
+      bleIcon.textContent = '🟢';
+      bleText.textContent = '接続済み';
+      connectBtn.textContent = '切断';
+    } else {
+      bleIcon.textContent = '🔴';
+      bleText.textContent = '未接続';
+      connectBtn.textContent = 'BLE接続';
     }
+  }
 
-    bleDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }],
-      optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+  // BLE接続処理
+  async function connectBLE() {
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ namePrefix: "ESP32" }],  // ESP32-Stopwatch など
+      optionalServices: [SERVICE_UUID]
     });
 
-    bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    const characteristic = await service.getCharacteristic('abcd1234-abcd-1234-abcd-1234567890ab');
 
-    bleServer = await bleDevice.gatt.connect();
-    const service = await bleServer.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
-    bleCharacteristic = await service.getCharacteristic('0000ffe0-0000-1000-8000-00805f9b34fb');
+    // 通知受信
+    await characteristic.startNotifications();
+    characteristic.addEventListener("characteristicvaluechanged", (event) => {
+      const value = new TextDecoder().decode(event.target.value);
+      console.log("受信:", value);
+      document.getElementById("display").textContent = value;
+    });
 
-    updateBleStatus(true);
-
-    await bleCharacteristic.startNotifications();
-    bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
+    console.log("✅ BLE接続成功");
 
   } catch (error) {
-    console.error('BLE接続失敗:', error);
-    alert('BLE接続に失敗しました: ' + error.message);
-    updateBleStatus(false);
+    console.error("❌ BLE接続エラー:", error);
   }
 }
-    try {
-      if (bleDevice && bleDevice.gatt.connected) {
-        await bleDevice.gatt.disconnect();
-        updateBleStatus(false);
-        return;
-      }
-
-      // ✅ 修正：デバイス取得と代入
-      bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [SERVICE_UUID] }],
-        optionalServices: [SERVICE_UUID]
-      });
-
-      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-      bleServer = await bleDevice.gatt.connect();
-      const service = await bleServer.getPrimaryService(SERVICE_UUID);
-      bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-      await bleCharacteristic.startNotifications();
-      bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
-
-      updateBleStatus(true);
-    } catch (error) {
-      console.error('BLE接続失敗:', error);
-      alert('BLE接続に失敗しました: ' + error.message);
-      updateBleStatus(false);
-    }
-  }
-
-  async function sendCommand(command) {
-    if (!bleCharacteristic) {
-      alert("BLE未接続です");
-      return;
-    }
-    const encoder = new TextEncoder();
-    await bleCharacteristic.writeValue(encoder.encode(command));
-    console.log("Sent:", command);
-  }
-
+  // BLE切断時処理
   function onDisconnected() {
-    console.log("BLE切断されました");
+    console.log('BLE切断されました');
     updateBleStatus(false);
   }
 
-  function updateBleStatus(isConnected) {
-    const status = document.getElementById("bleStatus");
-    if (status) {
-      status.textContent = isConnected ? "✅ 接続中" : "❌ 未接続";
+  // BLEからのデータ受信処理
+  function handleBleData(event) {
+    const value = event.target.value;
+    // 受信バイトを文字列に変換（例）
+    let receivedText = '';
+    for (let i = 0; i < value.byteLength; i++) {
+      receivedText += String.fromCharCode(value.getUint8(i));
+    }
+    // 例: 受信した文字列を手動・自動モード表示に反映
+    if (document.getElementById('manualScreen').classList.contains('active')) {
+      manualMeasurementDisplay.textContent = receivedText;
+    }
+    if (document.getElementById('autoScreen').classList.contains('active')) {
+      autoMeasurementDisplay.textContent = receivedText;
     }
   }
 
-  function handleBleData(event) {
-    const value = new TextDecoder().decode(event.target.value);
-    console.log("受信:", value);
-  }
   // 画面切替関数
   function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -570,12 +599,12 @@ async function connectBle() {
   btnReady.addEventListener('click', () => {
     playAudio('ready');
     //manualMeasurementDisplay.textContent = '位置について';
-    sendBle('READY');
+    //sendBle('READY');
   });
   btnSet.addEventListener('click', () => {
     playAudio('set');
     //manualMeasurementDisplay.textContent = 'よーい';
-    sendBle('SET');
+    //sendBle('SET');
   });
 let manualTimerInterval = null;
 let manualStartTime = null;
@@ -589,7 +618,7 @@ btnStart.addEventListener('click', () => {
 
   playAudio('go');
   //manualMeasurementDisplay.textContent = 'スタート！';
-  sendBle('GO');
+  sendBle('start');
 
   // 計測タイマー開始
     manualStartTime = performance.now();
@@ -604,7 +633,7 @@ btnStart.addEventListener('click', () => {
 
   btnStopManual.addEventListener('click', () => {
     //manualMeasurementDisplay.textContent = 'ストップ';
-    sendBle('STOP');
+    sendBle('stop');
     if (manualTimerInterval) {
       clearInterval(manualTimerInterval);
       manualTimerInterval = null;
@@ -613,7 +642,7 @@ btnStart.addEventListener('click', () => {
 
   btnResetManual.addEventListener('click', () => {
     manualMeasurementDisplay.textContent = '--.--.--';
-    sendBle('RESET');
+    sendBle('reset');
     if (manualTimerInterval) {
       clearInterval(manualTimerInterval);
       manualTimerInterval = null;
@@ -686,21 +715,21 @@ function startSequenceAfterCountdown() {
   autoTimers.push(setTimeout(() => {
     playAudio('ready');
     autoMeasurementDisplay.textContent = '位置について';
-    sendBle('READY');
+    //sendBle('READY');
   }, 0));
 
   // よーい
   autoTimers.push(setTimeout(() => {
     playAudio('set');
     autoMeasurementDisplay.textContent = 'よーい';
-    sendBle('SET');
+    //sendBle('SET');
   }, timeReady * 1000));
 
   // スタート
   autoTimers.push(setTimeout(() => {
     playAudio('go');
     autoMeasurementDisplay.textContent = 'スタート！';
-    sendBle('GO');
+    sendBle('start');
     startStopwatchAuto(); // ⬅️ 計測タイマ開始（自動モード）
   }, (timeReady + timeSet) * 1000));
 
@@ -879,16 +908,6 @@ function formatTime(seconds) {
     localStorage.setItem("fixedSet", document.getElementById("fixedSet").value);
     alert("固定スタート設定を保存しました");
   }
-
-      // DOM読み込み後にイベント登録
-    document.addEventListener("DOMContentLoaded", () => {
-      const bleBtn = document.getElementById("connectBtn");
-      if (bleBtn) {
-        bleBtn.addEventListener("click", connectBLE);
-      } else {
-        console.error("BLE接続ボタンが見つかりません");
-      }
-    });
 </script>
 </body>
 </html>
