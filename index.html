@@ -665,6 +665,7 @@ btnStart.addEventListener('click', () => {
     stopAutoSequence();
     autoMeasurementDisplay.textContent = '--.--.--';
     countdownDisplay.textContent = '';
+    sendBle('reset');  // ← 追加
   });
 
   // 自動シーケンス開始
@@ -865,6 +866,8 @@ function startStopwatchAuto() {
   if (window._autoTimerInterval) {
     clearInterval(window._autoTimerInterval);
   }
+  sendBle('stop');  // ← ここでBLEに stop を送信
+
   window._autoTimerInterval = setInterval(() => {
     const elapsed = (Date.now() - startTime) / 1000;
     autoMeasurementDisplay.textContent = formatTime(elapsed);
