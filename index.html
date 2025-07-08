@@ -571,32 +571,34 @@ function handleBleData(event) {
   }
 
   // 音声再生関数（選択された音声ファイル名からセット）
-  function playAudio(type) {
-    let audioElem;
-    let filename;
-    switch(type) {
-      case 'ready':
-        filename = readySelect.value;
-        audioElem = audioReady;
-        break;
-      case 'set':
-        filename = setSelect.value;
-        audioElem = audioSet;
-        break;
-      case 'go':
-        filename = goSelect.value;
-        audioElem = audioGo;
-        break;
-      default:
-        return;
-    }
-    if (audioElem.src.indexOf(filename) === -1) {
-      audioElem.src = filename;
-    }
-    audioElem.volume = audioVolume;
-    audioElem.currentTime = 0;
-    audioElem.play();
+function playAudio(type) {
+  let audioElem;
+  let filename;
+  switch(type) {
+    case 'ready':
+      filename = readySelect.value;
+      audioElem = audioReady;
+      break;
+    case 'set':
+      filename = setSelect.value;
+      audioElem = audioSet;
+      break;
+    case 'go':
+      filename = goSelect.value;
+      audioElem = audioGo;
+      break;
+    default:
+      return null;
   }
+  if (audioElem.src.indexOf(filename) === -1) {
+    audioElem.src = filename;
+  }
+  audioElem.volume = audioVolume;
+  audioElem.currentTime = 0;
+  audioElem.play();
+  return audioElem; // ← audioタグを返す
+}
+
 
   // 手動モードボタン処理
   btnReady.addEventListener('click', () => {
@@ -661,11 +663,11 @@ btnStart.addEventListener('click', () => {
     startAutoSequence();
   });
   btnStopAuto.addEventListener('click', stopAutoSequence);
+
   btnResetAuto.addEventListener('click', () => {
-    stopAutoSequence();
+    sendBle('reset'); 
     autoMeasurementDisplay.textContent = '--.--.--';
     countdownDisplay.textContent = '';
-    sendBle('reset');  // ← 追加
   });
 
   // 自動シーケンス開始
@@ -730,11 +732,21 @@ function startSequenceAfterCountdown() {
   }, timeReady * 1000));
 
   // スタート
+  // GO 音声 → 再生終了後にBLE送信とタイマー開始
   autoTimers.push(setTimeout(() => {
-    playAudio('go');
+    const audio = playAudio('go');
     autoMeasurementDisplay.textContent = 'スタート！';
-    sendBle('start');
-    startStopwatchAuto(); // ⬅️ 計測タイマ開始（自動モード）
+
+    if (audio) {
+      audio.onended = () => {
+        sendBle('start');
+        startStopwatchAuto();
+      };
+    } else {
+      // 音が取得できなかった場合は即開始（安全策）
+      sendBle('start');
+      startStopwatchAuto();
+    }
   }, (timeReady + timeSet) * 1000));
 
   // カウントダウン表示
@@ -762,6 +774,7 @@ function stopAutoSequence() {
     clearInterval(window._autoTimerInterval);
     window._autoTimerInterval = null;
   }
+  sendBle('stop');  // ← 追加
   autoSequenceRunning = false;
   countdownDisplay.textContent = '';
 }
@@ -866,7 +879,6 @@ function startStopwatchAuto() {
   if (window._autoTimerInterval) {
     clearInterval(window._autoTimerInterval);
   }
-  sendBle('stop');  // ← ここでBLEに stop を送信
 
   window._autoTimerInterval = setInterval(() => {
     const elapsed = (Date.now() - startTime) / 1000;
