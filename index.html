@@ -512,88 +512,58 @@
     }
   }
 
-    // BLE接続処理
-    async function connectBle() {
-      try {
-        if (bleDevice && bleDevice.gatt.connected) {
-          bleDevice.gatt.disconnect();
-          updateBleStatus(false);
-          return;
-        }
+  async function connectBle() {
+  try {
+    console.log("connectBle() called");
 
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [SERVICE_UUID] }],
-          optionalServices: [SERVICE_UUID]
-        });
-
-        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-        bleServer = await bleDevice.gatt.connect();
-        const service = await bleServer.getPrimaryService(SERVICE_UUID);
-        bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-        await bleCharacteristic.startNotifications();
-        bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
-
-        updateBleStatus(true);
-      } catch (error) {
-        console.error('BLE接続失敗:', error);
-        alert('BLE接続に失敗しました: ' + error.message);
-        updateBleStatus(false);
-      }
-    }
-    
-      try {
-        if (bleDevice && bleDevice.gatt.connected) {
-          bleDevice.gatt.disconnect();
-          updateBleStatus(false);
-          return;
-        }
-
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [SERVICE_UUID] }],
-          optionalServices: [SERVICE_UUID]
-        });
-
-        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-        bleServer = await bleDevice.gatt.connect();
-        const service = await bleServer.getPrimaryService(SERVICE_UUID);
-        bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-        await bleCharacteristic.startNotifications();
-        bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
-
-        updateBleStatus(true);
-      } catch (error) {
-        console.error('BLE接続失敗:', error);
-        alert('BLE接続に失敗しました: ' + error.message);
-        updateBleStatus(false);
-      }
+    if (bleDevice && bleDevice.gatt.connected) {
+      await bleDevice.gatt.disconnect();
+      updateBleStatus(false);
+      return;
     }
 
-  // BLE切断時処理
-  function onDisconnected() {
-    console.log('BLE切断されました');
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }],
+      optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+    });
+
+    bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+    bleServer = await bleDevice.gatt.connect();
+    const service = await bleServer.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
+    bleCharacteristic = await service.getCharacteristic('0000ffe0-0000-1000-8000-00805f9b34fb');
+
+    updateBleStatus(true);
+
+    await bleCharacteristic.startNotifications();
+    bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
+
+  } catch (error) {
+    console.error('BLE接続失敗:', error);
+    alert('BLE接続に失敗しました: ' + error.message);
     updateBleStatus(false);
   }
+}
 
-  // BLEからのデータ受信処理
-  function handleBleData(event) {
-    const value = event.target.value;
-    // 受信バイトを文字列に変換（例）
-    let receivedText = '';
-    for (let i = 0; i < value.byteLength; i++) {
-      receivedText += String.fromCharCode(value.getUint8(i));
-    }
-    // 例: 受信した文字列を手動・自動モード表示に反映
-    if (document.getElementById('manualScreen').classList.contains('active')) {
-      manualMeasurementDisplay.textContent = receivedText;
-    }
-    if (document.getElementById('autoScreen').classList.contains('active')) {
-      autoMeasurementDisplay.textContent = receivedText;
-    }
+// BLE接続状態表示
+function updateBleStatus(connected) {
+  const statusEl = document.getElementById("bleStatus");
+  if (statusEl) {
+    statusEl.textContent = connected ? "接続中" : "未接続";
   }
+}
+
+// 切断されたときの処理
+function onDisconnected() {
+  console.log("BLE切断されました");
+  updateBleStatus(false);
+}
+
+// 通知受信時の処理
+function handleBleData(event) {
+  const value = new TextDecoder().decode(event.target.value);
+  console.log("受信:", value);
+}
 
   // 画面切替関数
   function showScreen(screenId) {
