@@ -734,20 +734,13 @@ function startSequenceAfterCountdown() {
   // スタート
   // GO 音声 → 再生終了後にBLE送信とタイマー開始
   autoTimers.push(setTimeout(() => {
-    const audio = playAudio('go');
-    autoMeasurementDisplay.textContent = 'スタート！';
+  playAudio('go'); // 音再生（終わりは待たない）
 
-    if (audio) {
-      audio.onended = () => {
-        sendBle('start');
-        startStopwatchAuto();
-      };
-    } else {
-      // 音が取得できなかった場合は即開始（安全策）
-      sendBle('start');
-      startStopwatchAuto();
-    }
-  }, (timeReady + timeSet) * 1000));
+  autoMeasurementDisplay.textContent = 'スタート！';
+
+  sendBle('start');           // 🔴 即BLE送信
+  startStopwatchAuto();       // 🔴 即計測開始
+}, (timeReady + timeSet) * 1000));
 
   // カウントダウン表示
   //const intervalMs = 100;
