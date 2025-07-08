@@ -511,8 +511,11 @@
       connectBtn.textContent = 'BLE接続';
     }
   }
+  window.onload = () => {
+    document.getElementById("connectBtn").addEventListener("click", connectBle);
+  };
 
-  // BLE接続処理
+    // BLE接続処理
   async function connectBLE() {
   try {
     const device = await navigator.bluetooth.requestDevice({
