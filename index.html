@@ -542,6 +542,36 @@
         updateBleStatus(false);
       }
     }
+    
+      try {
+        if (bleDevice && bleDevice.gatt.connected) {
+          bleDevice.gatt.disconnect();
+          updateBleStatus(false);
+          return;
+        }
+
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [SERVICE_UUID] }],
+          optionalServices: [SERVICE_UUID]
+        });
+
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+        bleServer = await bleDevice.gatt.connect();
+        const service = await bleServer.getPrimaryService(SERVICE_UUID);
+        bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+        await bleCharacteristic.startNotifications();
+        bleCharacteristic.addEventListener('characteristicvaluechanged', handleBleData);
+
+        updateBleStatus(true);
+      } catch (error) {
+        console.error('BLE接続失敗:', error);
+        alert('BLE接続に失敗しました: ' + error.message);
+        updateBleStatus(false);
+      }
+    }
+
   // BLE切断時処理
   function onDisconnected() {
     console.log('BLE切断されました');
